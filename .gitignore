@@ -1,0 +1,10 @@
+# IDE files
+.vscode/
+
+# Local data and backups
+ResultData/
+backup/
+
+# OS files
+Thumbs.db
+.DS_Store
