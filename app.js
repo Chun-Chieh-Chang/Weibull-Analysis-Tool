@@ -376,15 +376,82 @@ function switchTheoryTab(id) {
 }
 
 function exportData() {
-    if (!analysisResults) return alert("❌ 無分析數據。");
-    let csv = "\ufeff實驗組,Beta,Eta,R2,模式\n";
-    ['groupA', 'groupB'].forEach(k => { if (analysisResults[k]) csv += `${k},${analysisResults[k].beta.toFixed(4)},${analysisResults[k].eta.toFixed(2)},${analysisResults[k].r2.toFixed(4)},${analysisResults[k].typeText}\n`; });
-    const b = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const l = document.createElement('a'); l.href = URL.createObjectURL(b); l.download = `Report_${new Date().getTime()}.csv`; l.click();
+    if (!analysisResults) return alert("❌ 無分析數據可匯出，請先執行分析。");
+
+    const nameA = document.getElementById('groupNameA').value;
+    const nameB = document.getElementById('groupNameB').value;
+
+    let csvContent = "\ufeffMouldex Weibull 專業版分析報告\n";
+    csvContent += `匯出日期,${new Date().toLocaleString()}\n\n`;
+
+    // 1. 彙總統計
+    csvContent += "=== 1. 核心參數彙總統計 ===\n";
+    csvContent += "項目,實驗組 A,實驗組 B,差異率 (%)\n";
+
+    const betaA = analysisResults.groupA ? analysisResults.groupA.beta : 0;
+    const betaB = analysisResults.groupB ? analysisResults.groupB.beta : 0;
+    const etaA = analysisResults.groupA ? analysisResults.groupA.eta : 0;
+    const etaB = analysisResults.groupB ? analysisResults.groupB.eta : 0;
+
+    csvContent += `形狀參數 (Beta β),${betaA ? betaA.toFixed(4) : '-'},${betaB ? betaB.toFixed(4) : '-'},${(betaA && betaB) ? (((betaB - betaA) / betaA * 100).toFixed(2) + '%') : '-'}\n`;
+    csvContent += `特徵壽命 (Eta η),${etaA ? etaA.toFixed(2) : '-'},${etaB ? etaB.toFixed(2) : '-'},${(etaA && etaB) ? (((etaB - etaA) / etaA * 100).toFixed(2) + '%') : '-'}\n`;
+    csvContent += `擬合優度 (R²),${analysisResults.groupA ? analysisResults.groupA.r2.toFixed(4) : '-'},${analysisResults.groupB ? analysisResults.groupB.r2.toFixed(4) : '-'}\n`;
+    csvContent += `失效模式判定,${analysisResults.groupA ? analysisResults.groupA.typeText : '-'},${analysisResults.groupB ? analysisResults.groupB.typeText : '-'}\n\n`;
+
+    // 2. 原始數據
+    csvContent += "=== 2. 原始數據對照表 ===\n";
+    csvContent += `,,[ ${nameA} ],,,,[ ${nameB} ]\n`;
+    csvContent += "ID,壽命 (t),狀態 (F/S),,ID,壽命 (t),狀態 (F/S)\n";
+
+    const maxLen = Math.max(dataGroupA.length, dataGroupB.length);
+    for (let i = 0; i < maxLen; i++) {
+        const rowA = dataGroupA[i] ? `${i + 1},${dataGroupA[i].t},${dataGroupA[i].s}` : ",,";
+        const rowB = dataGroupB[i] ? `${i + 1},${dataGroupB[i].t},${dataGroupB[i].s}` : ",,";
+        csvContent += `${rowA},,,,${rowB}\n`;
+    }
+    csvContent += "\n";
+
+    // 3. B-Life
+    csvContent += "=== 3. 工程預測 B-Life 指標 ===\n";
+    csvContent += "指標機率 (Bx),實驗組 A 預估值,實驗組 B 預估值,改進比例\n";
+
+    [1, 5, 10, 20, 50].forEach(b => {
+        const R = (100 - b) / 100;
+        const calc = (res) => res ? Math.round(res.eta * Math.pow(-Math.log(R), 1 / res.beta)) : 0;
+        const tA = calc(analysisResults.groupA), tB = calc(analysisResults.groupB);
+        csvContent += `B${b},${tA || '-'},${tB || '-'},${(tA && tB) ? (((tB - tA) / tA * 100).toFixed(1) + '%') : '-'}\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Mouldex_Weibull_FullReport.csv`;
+    link.click();
 }
 
 function generateReport() {
-    html2canvas(document.getElementById('reportArea')).then(c => {
-        const l = document.createElement('a'); l.href = c.toDataURL('image/png'); l.download = `Mouldex_Full_Report.png`; l.click();
+    const element = document.getElementById('reportArea');
+    // 增加導出時的穩定性，暫時強制背景與寬度
+    const originalStyle = element.style.cssText;
+    element.style.background = "#f8fafc";
+    element.style.padding = "40px";
+
+    html2canvas(element, {
+        scale: 2, // 提高解析度
+        useCORS: true,
+        backgroundColor: "#f8fafc",
+        windowWidth: 1400,
+        onclone: (clonedDoc) => {
+            // 在副本中移除可能導致干擾的元素
+            const report = clonedDoc.getElementById('reportArea');
+            report.style.width = "1400px";
+            report.style.margin = "0";
+        }
+    }).then(canvas => {
+        element.style.cssText = originalStyle; // 還原樣式
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = `Mouldex_Weibull_Report_${new Date().getTime()}.png`;
+        link.click();
     });
 }

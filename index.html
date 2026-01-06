@@ -202,24 +202,24 @@
                     <div class="p-diff-panel" id="diffPanel" style="display:none;">
                         <div class="p-diff-header">
                             <div>
-                                <h3 style="color: #fff; margin-bottom: 4px;">壽命改進報告</h3>
-                                <p style="color: #94a3b8; font-size: 0.85rem;">Quantitative Life Improvement Analysis
-                                </p>
+                                <h3 style="margin-bottom: 4px;">壽命改進報告 (Executive Summary)</h3>
+                                <p style="color: var(--p-gray); font-size: 0.85rem;">Quantitative Life Improvement
+                                    Analysis</p>
                             </div>
                             <div id="diffInterpretation" class="p-diff-interpretation">-</div>
                         </div>
                         <div class="p-metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
-                            <div class="p-metric-box" style="background: rgba(255,255,255,0.05); border: none;">
-                                <span style="color:#94a3b8;">Beta Delta</span>
-                                <strong id="diffBeta" style="color:#fff;">-</strong>
+                            <div class="p-metric-box">
+                                <span>Beta Delta</span>
+                                <strong id="diffBeta" style="color: var(--p-indigo);">-</strong>
                             </div>
-                            <div class="p-metric-box" style="background: rgba(255,255,255,0.05); border: none;">
-                                <span style="color:#94a3b8;">Eta Delta</span>
-                                <strong id="diffEta" style="color:#fff;">-</strong>
+                            <div class="p-metric-box">
+                                <span>Eta Delta</span>
+                                <strong id="diffEta" style="color: var(--p-indigo);">-</strong>
                             </div>
-                            <div class="p-metric-box" style="background: var(--p-indigo); border: none;">
-                                <span style="color:rgba(255,255,255,0.7);">Overall Improvement</span>
-                                <strong id="diffImprovement" style="color:#fff;">-</strong>
+                            <div class="p-metric-box" style="background: #eef2ff; border: 1px solid #c7d2fe;">
+                                <span style="color: var(--p-indigo);">Overall Improvement</span>
+                                <strong id="diffImprovement" style="color: var(--p-indigo);">-</strong>
                             </div>
                         </div>
                     </div>
@@ -295,30 +295,152 @@
             </nav>
             <div class="p-modal-body p-theory-content">
                 <div id="theory-basics" class="theory-section">
-                    <h2>關鍵數據類型</h2>
-                    <p><b>失效數據 (Failure):</b> 測試中產生的明確故障點。</p>
-                    <p><b>由設限數據 (Suspended):</b> 測試結束時尚存活的產品。雖然未失效，但提供了極重要的「存活長度」訊息。</p>
-                    <div class="formula-card">\( R(t) + F(t) = 1 \)</div>
+                    <h2>1. Weibull 分佈基本原理</h2>
+                    <p>威布爾分佈 (Weibull Distribution) 是可靠度工程中最通用的機率模型。其核心優勢在於能通過形狀參數 (Beta) 的變化，模擬出產品生命週期中不同的失效特徵。</p>
+
+                    <div class="highlight-box">
+                        <h3 style="margin-bottom: 12px; font-size: 1rem;">核心數學模型</h3>
+                        <p>可靠度函數 R(t) 表示在時間 t 仍然存活的機率：</p>
+                        <div class="formula-card" style="font-size: 1.8rem;">\( R(t) = e^{-(t/\eta)^\beta} \)</div>
+                        <p style="font-size: 0.85rem; color: var(--p-gray);">其中 $\beta$ 為形狀參數，$\eta$ 為尺度參數（特徵壽命）。</p>
+                    </div>
+
+                    <h3>基礎數據類型</h3>
+                    <ul>
+                        <li><b style="color: var(--p-rose);">失效數據 (Complete/Failure Data):</b> 觀測到產品確切發失效的時間點。</li>
+                        <li><b style="color: var(--p-blue);">右設限數據 (Right Censored/Suspended):</b>
+                            測試結束時產品仍完好，僅知其壽命大於當前時間。</li>
+                    </ul>
                 </div>
-                <!-- ... other sections remain similar but logic will show them ... -->
+
                 <div id="theory-params" class="theory-section" style="display:none;">
-                    <h2>Weibull 分佈參數</h2>
-                    <p><b>Shape β:</b> 決定失效機制。β < 1 為早期失效，β=1 為隨機失效，β> 1 為磨耗失效。</p>
-                    <p><b>Scale η:</b> 特徵壽命，代表 63.2% 產品失效的時間點。</p>
+                    <h2>2. 分佈參數深度解析</h2>
+
+                    <div class="field" style="margin-bottom: 32px;">
+                        <h3 style="color: var(--p-indigo); margin-bottom: 12px;">形狀參數 Shape (Beta β)</h3>
+                        <p>Beta 決定了失效分佈的幾何趨勢，直接反應「失效機制」：</p>
+                        <table class="p-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 120px;">Beta 數值</th>
+                                    <th>失效機制 (Mechanism)</th>
+                                    <th>工程特徵</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><b>β < 1.0</b>
+                                    </td>
+                                    <td style="color:var(--p-rose)">早期失效 (Infant Mortality)</td>
+                                    <td>失效率隨時間下降。常與設計缺陷、製造髒污或材料瑕疵有關。</td>
+                                </tr>
+                                <tr>
+                                    <td><b>β = 1.0</b></td>
+                                    <td>隨機失效 (Random Chance)</td>
+                                    <td>失效率為常數。失效由隨機且不可預期的外部應力引起。</td>
+                                </tr>
+                                <tr>
+                                    <td><b style="color:var(--p-indigo)">1.0 < β < 4</b>
+                                    </td>
+                                    <td>磨耗失效 (Wear-out)</td>
+                                    <td>失效率隨時間增加。代表產品進入健康衰減期，如磨損、疲勞。</td>
+                                </tr>
+                                <tr>
+                                    <td><b>β > 4.0</b></td>
+                                    <td>快速劣化 (Rapid Aging)</td>
+                                    <td>失效極度集中。代表材料或結構在短時間內徹底崩溃。</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="field">
+                        <h3 style="color: var(--p-indigo); margin-bottom: 12px;">尺度參數 Scale (Eta η)</h3>
+                        <p>又稱「特徵壽命」。代表累積失效機率達到 <b>63.2%</b> 的時間點。它是衡量產品壽命長度的主指標。</p>
+                    </div>
                 </div>
+
                 <div id="theory-blife" class="theory-section" style="display:none;">
-                    <h2>B-Life 指標意義</h2>
-                    <p><b>B10:</b> 行業標準，代表 10% 數據失效的時間，常用於定義保固期。</p>
-                    <p><b>B1:</b> 用於高安全性產品，代表僅 1% 失效。 </p>
+                    <h2>3. B-Life 工程指標意義</h2>
+                    <p>B-Life 指標代表「失效百分比達到 x% 時的時間點」。</p>
+
+                    <table class="p-table" style="margin: 20px 0;">
+                        <thead>
+                            <tr>
+                                <th>指標</th>
+                                <th>失效比例</th>
+                                <th>工程應用場景</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><b>B1</b></td>
+                                <td>1% 失效</td>
+                                <td>航空航天、醫療植入裝置、汽車安全氣囊等極高安全性組件。</td>
+                            </tr>
+                            <tr>
+                                <td style="color: var(--p-indigo);"><b>B10</b></td>
+                                <td>10% 失效</td>
+                                <td><b>工業標準</b>。常用於軸承、電機與一般消費品保固期限設定。</td>
+                            </tr>
+                            <tr>
+                                <td><b>B50</b></td>
+                                <td>50% 失效</td>
+                                <td>中位數壽命。用於衡量整批產品的平均能量水平。</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="highlight-box">
+                        <h3>計算模型</h3>
+                        <div class="formula-card">\( t = \eta \cdot [-\ln(R)]^{1/\beta} \)</div>
+                    </div>
                 </div>
+
                 <div id="theory-samples" class="theory-section" style="display:none;">
-                    <h2>統計樣本建議</h2>
-                    <p>雖然 2 筆數據點即可擬合，但穩定係建議至少 6-10 筆以上失效數據。</p>
+                    <h2>4. 樣本數量與信心度建議</h2>
+                    <p>樣本量直接決定了分析結果的精確度與統計信心水平：</p>
+
+                    <div class="p-metrics-grid" style="margin: 24px 0;">
+                        <div class="p-metric-box">
+                            <span>極低預測力</span>
+                            <strong>3-5 顆</strong>
+                            <p style="font-size: 0.75rem; color: var(--p-rose);">僅能觀察初步區間，Beta 值波動极大。</p>
+                        </div>
+                        <div class="p-metric-box">
+                            <span>初步分析</span>
+                            <strong>6-10 顆</strong>
+                            <p style="font-size: 0.75rem; color: var(--p-gray);">行業內初步評估 B10 之低點數建議值。</p>
+                        </div>
+                        <div class="p-metric-box" style="border: 2px solid var(--p-indigo); background: #f5f7ff;">
+                            <span style="color: var(--p-indigo);">專業工程建議</span>
+                            <strong style="color: var(--p-indigo);">12-20 顆</strong>
+                            <p style="font-size: 0.75rem; color: var(--p-indigo); font-weight: 600;">取得穩定參數與窄信心區間的黃金區間。
+                            </p>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-bottom: 12px;">Python 自動化分析 (範例碼)</h3>
+                    <pre
+                        style="background: #f8fafc; border: 1px solid var(--p-border); padding: 16px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.4; color: #334155;">
+import numpy as np
+from scipy import stats
+
+# 工程觀測壽命數據 (失效點)
+lifetimes = [450, 580, 690, 780, 870, 950]
+
+# Weibull 參數擬合
+# floc=0 代表位置參數為0 (兩參數 Weibull)
+shape, loc, scale = stats.weibull_min.fit(lifetimes, floc=0)
+
+print(f"Shape (Beta): {shape:.4f}")
+print(f"Scale (Eta): {scale:.2f}")
+                    </pre>
                 </div>
             </div>
             <div class="p-modal-header"
                 style="justify-content: flex-end; border-top: 1px solid var(--p-border); border-bottom: none;">
-                <button class="p-btn p-btn-indigo" onclick="closeTheory()">關閉</button>
+                <button class="p-btn p-btn-indigo" onclick="closeTheory()">完成學習並關閉</button>
             </div>
         </div>
     </div>
