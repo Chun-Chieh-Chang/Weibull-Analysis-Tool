@@ -335,10 +335,45 @@ function updateReliabilityMarkers(pct) {
 
 // --- Utils & UI ---
 function loadDemoCombined() {
-    dataGroupA = [{ t: 300, s: 'F' }, { t: 450, s: 'F' }, { t: 150, s: 'F' }, { t: 600, s: 'S' }, { t: 400, s: 'F' }, { t: 200, s: 'F' }];
-    dataGroupB = dataGroupA.map(d => ({ t: Math.round(d.t * 1.35), s: d.s }));
-    updateTable('A'); updateTable('B');
-    alert("✨ 示範數據已加載：展示 B 方案較 A 方案提升 35% 壽命的情境。");
+    // 恢復原版基準數據
+    const originalData = [
+        { t: 300, s: 'F' }, { t: 100, s: 'F' }, { t: 250, s: 'S' },
+        { t: 150, s: 'F' }, { t: 550, s: 'F' }, { t: 120, s: 'S' },
+        { t: 400, s: 'F' }, { t: 200, s: 'F' }
+    ];
+
+    dataGroupA = JSON.parse(JSON.stringify(originalData));
+    dataGroupB = originalData.map(d => ({
+        t: Math.round(d.t * 1.25 * 10) / 10,
+        s: d.s
+    }));
+
+    updateTable('A');
+    updateTable('B');
+    runAnalysis();
+
+    document.getElementById('resultPanel').scrollIntoView({ behavior: 'smooth' });
+    alert("✅ 已恢復原版範例數據：\n組別 B 為組別 A 之 1.25 倍壽命基準。");
+}
+
+/**
+ * 額外支援單組載入原版數據 (供 UI 按鈕使用)
+ */
+function loadDemo(group) {
+    const originalData = [
+        { t: 300, s: 'F' }, { t: 100, s: 'F' }, { t: 250, s: 'S' },
+        { t: 150, s: 'F' }, { t: 550, s: 'F' }, { t: 120, s: 'S' },
+        { t: 400, s: 'F' }, { t: 200, s: 'F' }
+    ];
+
+    const target = (group === 'A') ? originalData : originalData.map(d => ({ t: Math.round(d.t * 1.25 * 10) / 10, s: d.s }));
+
+    if (group === 'A') dataGroupA = target;
+    else dataGroupB = target;
+
+    sortData(group);
+    updateTable(group);
+    alert(`✅ 已載入組別 ${group} 的原版範例數據！`);
 }
 
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
