@@ -1,64 +1,49 @@
-// 全域變數
+/**
+ * Weibull Analysis Tool - Enterprise Logic (app.js)
+ * Refined for Mouldex Professional v4.5
+ */
+
 let dataGroupA = [];
 let dataGroupB = [];
-let chartProb = true;
-let chartRel = true;
 let analysisResults = null;
-let t95PointsData = [];
 let markerReliabilityPercent = 95;
 let currentBatchGroup = '';
 
-// 初始化
+// --- Initialization ---
 window.onload = function () {
     setupEventListeners();
-    // 設定焦點
     const tInputA = document.getElementById('tInputA');
     if (tInputA) tInputA.focus();
 };
 
 function setupEventListeners() {
-    // 組A Enter鍵監聽
-    const tInputA = document.getElementById('tInputA');
-    const sInputA = document.getElementById('sInputA');
-    if (tInputA) {
-        tInputA.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') { e.preventDefault(); addData('A'); }
-        });
-    }
-    if (sInputA) {
-        sInputA.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') { e.preventDefault(); addData('A'); }
-        });
-    }
+    ['A', 'B'].forEach(group => {
+        const tInput = document.getElementById(`tInput${group}`);
+        const sInput = document.getElementById(`sInput${group}`);
+        if (tInput) {
+            tInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); addData(group); }
+            });
+        }
+        if (sInput) {
+            sInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); addData(group); }
+            });
+        }
+    });
 
-    // 組B Enter鍵監聽
-    const tInputB = document.getElementById('tInputB');
-    const sInputB = document.getElementById('sInputB');
-    if (tInputB) {
-        tInputB.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') { e.preventDefault(); addData('B'); }
-        });
-    }
-    if (sInputB) {
-        sInputB.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') { e.preventDefault(); addData('B'); }
-        });
-    }
-
-    // 可靠度輸入即時更新標示
     const inputRel = document.getElementById('inputReliability');
     if (inputRel) {
-        const handler = () => {
+        inputRel.addEventListener('input', () => {
             const val = parseFloat(inputRel.value);
             if (isNaN(val) || val <= 0 || val >= 100) return;
             markerReliabilityPercent = val;
-            updateReliabilityMarkers(markerReliabilityPercent);
-        };
-        inputRel.addEventListener('input', handler);
-        inputRel.addEventListener('change', handler);
+            if (analysisResults) updateReliabilityMarkers(markerReliabilityPercent);
+        });
     }
 }
 
+// --- Data Operations ---
 function addData(group) {
     const tInput = document.getElementById(`tInput${group}`);
     const sInput = document.getElementById(`sInput${group}`);
@@ -66,130 +51,71 @@ function addData(group) {
     const s = sInput.value;
 
     if (isNaN(t) || t <= 0) {
-        if (tInput.value !== "") alert("請輸入大於 0 的有效壽命");
+        if (tInput.value !== "") alert("❌ 請輸入有效的正數壽命值");
         return;
     }
 
-    if (group === 'A') {
-        dataGroupA.push({ t: t, s: s });
-        sortDataArray('A');
-        updateTable('A');
-    } else {
-        dataGroupB.push({ t: t, s: s });
-        sortDataArray('B');
-        updateTable('B');
-    }
+    const target = (group === 'A') ? dataGroupA : dataGroupB;
+    target.push({ t, s });
+    sortData(group);
+    updateTable(group);
 
     tInput.value = '';
     tInput.focus();
 }
 
-function sortDataArray(group) {
-    const data = group === 'A' ? dataGroupA : dataGroupB;
-    data.sort((a, b) => {
-        if (a.t !== b.t) return a.t - b.t;
-        return (a.s === 'F' ? -1 : 1);
-    });
-}
-
-function updateTable(group) {
-    const data = group === 'A' ? dataGroupA : dataGroupB;
-    const tbody = document.querySelector(`#dataTable${group} tbody`);
-    if (!tbody) return;
-    tbody.innerHTML = '';
-
-    const failColor = getComputedStyle(document.documentElement).getPropertyValue('--danger').trim() || '#f72585';
-    const suspColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#4361ee';
-
-    data.forEach((item, idx) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td style="color:#64748b;">${idx + 1}</td>
-            <td style="font-weight:600;">${item.t}</td>
-            <td style="color:${item.s === 'F' ? failColor : suspColor}; font-weight:600;">
-                ${item.s === 'F' ? '失效' : '設限'}
-            </td>
-            <td><button class="btn-del" onclick="deleteRow('${group}', ${idx})"><i class="fas fa-times"></i>×</button></td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
 function deleteRow(group, idx) {
-    if (group === 'A') {
-        dataGroupA.splice(idx, 1);
-        updateTable('A');
-    } else {
-        dataGroupB.splice(idx, 1);
-        updateTable('B');
-    }
+    const target = (group === 'A') ? dataGroupA : dataGroupB;
+    target.splice(idx, 1);
+    updateTable(group);
 }
 
 function clearData(group) {
-    if (!confirm(`確定要清空組別 ${group} 的所有數據嗎？`)) return;
-
-    if (group === 'A') {
-        dataGroupA = [];
-        updateTable('A');
-    } else {
-        dataGroupB = [];
-        updateTable('B');
-    }
+    if (!confirm(`確定要抹除「${document.getElementById('groupName' + group).value}」的所有數據嗎？`)) return;
+    if (group === 'A') dataGroupA = []; else dataGroupB = [];
+    updateTable(group);
 }
 
-function clearAllData() {
-    if (!confirm('確定要清空兩組的所有數據和圖表嗎？')) return;
-
-    dataGroupA = [];
-    dataGroupB = [];
-    analysisResults = null;
-    t95PointsData = [];
-
-    updateTable('A');
-    updateTable('B');
-
-    try {
-        Plotly.purge('chartProb');
-        Plotly.purge('chartRel');
-        chartProb = false;
-        chartRel = false;
-    } catch (e) {
-        console.log('圖表清除:', e);
-    }
-
-    document.getElementById('resultPanel').classList.remove('show');
-    document.getElementById('groupResultA').classList.remove('show');
-    document.getElementById('groupResultB').classList.remove('show');
-    document.getElementById('diffPanel').classList.remove('show');
-
-    alert('✅ 已清空所有數據和圖表！');
+function sortData(group) {
+    const data = (group === 'A') ? dataGroupA : dataGroupB;
+    data.sort((a, b) => (a.t !== b.t) ? (a.t - b.t) : (a.s === 'F' ? -1 : 1));
 }
 
-function loadDemo(group) {
-    const demoData = [
-        { t: 300, s: 'F' }, { t: 100, s: 'F' }, { t: 250, s: 'S' },
-        { t: 150, s: 'F' }, { t: 550, s: 'F' }, { t: 120, s: 'S' },
-        { t: 400, s: 'F' }, { t: 200, s: 'F' }
-    ];
+function updateTable(group) {
+    const data = (group === 'A') ? dataGroupA : dataGroupB;
+    const tbody = document.querySelector(`#dataTable${group} tbody`);
+    if (!tbody) return;
 
-    if (group === 'A') {
-        dataGroupA = [...demoData];
-        sortDataArray('A');
-        updateTable('A');
-    } else {
-        const demoBData = demoData.map(d => ({ t: Math.round(d.t * 1.25 * 10) / 10, s: d.s }));
-        dataGroupB = demoBData;
-        sortDataArray('B');
-        updateTable('B');
+    if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 40px;">尚未選取數據點</td></tr>`;
+        return;
     }
 
-    alert(`✅ 已載入組別 ${group} 的範例數據！`);
+    const accentColor = getComputedStyle(document.documentElement).getPropertyValue(group === 'A' ? '--brand-accent-a' : '--brand-accent-b').trim();
+
+    tbody.innerHTML = data.map((item, idx) => `
+        <tr>
+            <td style="color: #94a3b8; font-weight: 500;">#${idx + 1}</td>
+            <td style="font-weight: 600;">${item.t.toLocaleString()}</td>
+            <td>
+                <span style="display:inline-flex; align-items:center; gap:6px; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; background: ${item.s === 'F' ? 'rgba(220, 38, 38, 0.1)' : 'rgba(37, 99, 235, 0.1)'}; color: ${item.s === 'F' ? '#dc2626' : '#2563eb'};">
+                    <i class="fas ${item.s === 'F' ? 'fa-times-circle' : 'fa-check-circle'}"></i>
+                    ${item.s === 'F' ? '失效 (Failure)' : '設限 (Suspended)'}
+                </span>
+            </td>
+            <td>
+                <button class="row-action" onclick="deleteRow('${group}', ${idx})" title="刪除此筆">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
 }
 
-// 批次輸入功能
+// --- Batch Management ---
 function showBatchInput(group) {
     currentBatchGroup = group;
-    document.getElementById('batchTitle').textContent = `批次輸入數據 - 組別 ${group}`;
+    document.getElementById('batchTitle').textContent = `[${group}] 數據批次匯入引擎`;
     document.getElementById('batchModal').style.display = 'flex';
     document.getElementById('batchTextarea').value = '';
     document.getElementById('batchTextarea').focus();
@@ -197,412 +123,253 @@ function showBatchInput(group) {
 
 function closeBatchInput() {
     document.getElementById('batchModal').style.display = 'none';
-    currentBatchGroup = '';
 }
 
 function processBatchInput() {
-    const textarea = document.getElementById('batchTextarea');
-    const text = textarea.value.trim();
+    const lines = document.getElementById('batchTextarea').value.trim().split('\n');
+    let success = 0;
 
-    if (!text) {
-        alert("請輸入數據！");
-        return;
-    }
-
-    const lines = text.split('\n');
-    let successCount = 0;
-    let errorCount = 0;
-    const errors = [];
-
-    lines.forEach((line, index) => {
-        line = line.trim();
-        if (!line) return;
-
-        const parts = line.split(/[\t,\s]+/);
-
-        if (parts.length < 2) {
-            errors.push(`第 ${index + 1} 行：格式錯誤（需要兩欄數據）`);
-            errorCount++;
-            return;
-        }
-
+    lines.forEach(line => {
+        const parts = line.split(/[,\t\s]+/);
+        if (parts.length < 2) return;
         const t = parseFloat(parts[0]);
-        let s = parts[1].toUpperCase();
-
-        if (isNaN(t) || t <= 0) {
-            errors.push(`第 ${index + 1} 行：壽命必須是大於 0 的數字`);
-            errorCount++;
-            return;
+        const s = parts[1].toUpperCase();
+        if (!isNaN(t) && t > 0 && (s === 'F' || s === 'S')) {
+            if (currentBatchGroup === 'A') dataGroupA.push({ t, s });
+            else dataGroupB.push({ t, s });
+            success++;
         }
-
-        if (s !== 'F' && s !== 'S') {
-            errors.push(`第 ${index + 1} 行：狀態必須是 F 或 S`);
-            errorCount++;
-            return;
-        }
-
-        if (currentBatchGroup === 'A') {
-            dataGroupA.push({ t: t, s: s });
-        } else {
-            dataGroupB.push({ t: t, s: s });
-        }
-        successCount++;
     });
 
-    if (successCount > 0) {
-        if (currentBatchGroup === 'A') {
-            sortDataArray('A');
-            updateTable('A');
-        } else {
-            sortDataArray('B');
-            updateTable('B');
-        }
+    if (success > 0) {
+        sortData(currentBatchGroup);
+        updateTable(currentBatchGroup);
+        alert(`✅ 成功整合 ${success} 筆外部數據！`);
     }
-
     closeBatchInput();
-
-    if (errorCount > 0) {
-        alert(`✅ 成功加入 ${successCount} 筆數據\n❌ ${errorCount} 筆數據有誤：\n\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? '\n...(更多錯誤)' : ''}`);
-    } else {
-        alert(`✅ 成功加入 ${successCount} 筆數據！`);
-    }
 }
 
-// ========== Weibull 分析核心功能 ==========
+// --- Analysis Engine ---
 function runAnalysis() {
-    const hasDataA = dataGroupA.length > 0;
-    const hasDataB = dataGroupB.length > 0;
-
-    if (!hasDataA && !hasDataB) {
-        alert("❌ 請至少輸入一組數據！");
+    if (dataGroupA.length < 2 && dataGroupB.length < 2) {
+        alert("⚠️ 樣本數不足：單組至少需要 2 筆失效數據進行數學擬合。");
         return;
     }
 
-    let resultsA = null;
-    if (hasDataA) {
-        resultsA = analyzeGroup(dataGroupA, 'A');
-        if (!resultsA) return;
-    }
+    const resA = (dataGroupA.length >= 2) ? analyzeGroup(dataGroupA, 'A') : null;
+    const resB = (dataGroupB.length >= 2) ? analyzeGroup(dataGroupB, 'B') : null;
 
-    let resultsB = null;
-    if (hasDataB) {
-        resultsB = analyzeGroup(dataGroupB, 'B');
-        if (!resultsB) return;
-    }
-
-    analysisResults = {
-        groupA: resultsA,
-        groupB: resultsB,
-        mode: (hasDataA && hasDataB) ? 'dual' : 'single'
-    };
-
-    displayResults(resultsA, resultsB);
-    drawCharts(resultsA, resultsB);
-
-    alert('✅ 分析完成！\n\n📊 圖表已繪製完成。');
+    analysisResults = { groupA: resA, groupB: resB };
+    displayUIResults(resA, resB);
+    drawAnalytics(resA, resB);
 }
 
-function analyzeGroup(data, group) {
-    const failures = data.filter(d => d.s === 'F');
-    if (failures.length < 2) {
-        alert(`❌ 組別 ${group} 至少需要 2 個失效數據才能計算參數。`);
-        return null;
-    }
+function analyzeGroup(data, tag) {
+    const fData = data.filter(d => d.s === 'F');
+    if (fData.length < 2) return null;
 
     const N = data.length;
     let points = [];
-    let previousOrderNumber = 0;
+    let prevOrder = 0;
 
-    for (let i = 0; i < N; i++) {
-        let item = data[i];
-        let reverseRank = N - i;
-        let increment = ((N + 1) - previousOrderNumber) / reverseRank;
-        let newOrderNumber = previousOrderNumber + increment;
+    data.forEach((item, i) => {
+        const revRank = N - i;
+        const increment = ((N + 1) - prevOrder) / revRank;
+        const curOrder = prevOrder + increment;
 
         if (item.s === 'F') {
-            let medianRank = (newOrderNumber - 0.3) / (N + 0.4);
-            if (medianRank >= 0.99999) medianRank = 0.99999;
-
-            let x = Math.log(item.t);
-            let term = -Math.log(1 - medianRank);
-            let y = Math.log(term);
-
-            if (isFinite(x) && isFinite(y)) {
-                points.push({ x: x, y: y });
-            }
+            let mRank = (curOrder - 0.3) / (N + 0.4);
+            if (mRank >= 0.999) mRank = 0.999;
+            const x = Math.log(item.t);
+            const y = Math.log(-Math.log(1 - mRank));
+            if (isFinite(x) && isFinite(y)) points.push({ x, y });
         }
-        previousOrderNumber = newOrderNumber;
-    }
-
-    if (points.length < 2) {
-        alert(`❌ 組別 ${group} 有效數據點不足，無法擬合。`);
-        return null;
-    }
-
-    let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-    let nP = points.length;
-
-    points.forEach(p => {
-        sumX += p.x;
-        sumY += p.y;
-        sumXY += (p.x * p.y);
-        sumXX += (p.x * p.x);
+        prevOrder = curOrder;
     });
 
-    let slope = (nP * sumXY - sumX * sumY) / (nP * sumXX - sumX * sumX);
-    let intercept = (sumY - slope * sumX) / nP;
+    if (points.length < 2) return null;
 
-    let beta = slope;
-    let eta = Math.exp(-intercept / beta);
+    // Linear Regression
+    let sX = 0, sY = 0, sXY = 0, sXX = 0;
+    points.forEach(p => {
+        sX += p.x; sY += p.y; sXY += p.x * p.y; sXX += p.x * p.x;
+    });
 
-    let yMean = sumY / nP;
-    let ssTot = points.reduce((acc, p) => acc + Math.pow(p.y - yMean, 2), 0);
-    let ssRes = points.reduce((acc, p) => acc + Math.pow(p.y - (slope * p.x + intercept), 2), 0);
-    let r2 = 1 - (ssRes / ssTot);
+    const slope = (points.length * sXY - sX * sY) / (points.length * sXX - sX * sX);
+    const intercept = (sY - slope * sX) / points.length;
 
-    let typeText = "";
+    const beta = slope;
+    const eta = Math.exp(-intercept / beta);
+
+    const yMean = sY / points.length;
+    const ssTot = points.reduce((acc, p) => acc + Math.pow(p.y - yMean, 2), 0);
+    const ssRes = points.reduce((acc, p) => acc + Math.pow(p.y - (slope * p.x + intercept), 2), 0);
+    const r2 = 1 - (ssRes / (ssTot || 1));
+
+    let typeText = "磨耗失效 (Wear-out)";
     if (beta < 1) typeText = "早期失效 (Infant Mortality)";
-    else if (beta < 1.1) typeText = "隨機失效 (Constant Failure Rate)";
-    else typeText = "磨耗失效 (Wear-out)";
+    else if (beta < 1.1) typeText = "隨機失效 (Random Chance)";
 
-    return {
-        beta: beta,
-        eta: eta,
-        r2: r2,
-        typeText: typeText,
-        points: points,
-        slope: slope,
-        intercept: intercept,
-        maxT: data[data.length - 1].t
+    return { beta, eta, r2, typeText, points, slope, intercept, maxT: data[data.length - 1].t };
+}
+
+function displayUIResults(resA, resB) {
+    document.getElementById('resultPanel').style.display = 'block';
+
+    const updateStats = (tag, res) => {
+        const el = document.getElementById(`groupResult${tag}`);
+        if (res) {
+            el.style.display = 'block';
+            document.getElementById(`group${tag}TitleResult`).textContent = document.getElementById(`groupName${tag}`).value;
+            document.getElementById(`valBeta${tag}`).textContent = res.beta.toFixed(3);
+            document.getElementById(`valEta${tag}`).textContent = Math.round(res.eta).toLocaleString();
+            document.getElementById(`valR2${tag}`).textContent = res.r2.toFixed(4);
+            document.getElementById(`descText${tag}`).textContent = res.typeText;
+        } else {
+            el.style.display = 'none';
+        }
     };
-}
 
-function displayResults(resultsA, resultsB) {
-    const resultPanel = document.getElementById('resultPanel');
-    const groupResultA = document.getElementById('groupResultA');
-    const groupResultB = document.getElementById('groupResultB');
+    updateStats('A', resA);
+    updateStats('B', resB);
+
     const diffPanel = document.getElementById('diffPanel');
+    if (resA && resB) {
+        diffPanel.style.display = 'block';
+        const bDiff = ((resB.beta - resA.beta) / resA.beta * 100);
+        const eDiff = ((resB.eta - resA.eta) / resA.eta * 100);
 
-    resultPanel.classList.add('show');
+        document.getElementById('diffBeta').textContent = `${bDiff >= 0 ? '+' : ''}${bDiff.toFixed(1)}%`;
+        document.getElementById('diffEta').textContent = `${eDiff >= 0 ? '+' : ''}${eDiff.toFixed(1)}%`;
+        document.getElementById('diffImprovement').textContent = `${eDiff >= 0 ? '+' : ''}${eDiff.toFixed(1)}%`;
 
-    if (resultsA) {
-        groupResultA.classList.add('show');
-        document.getElementById('groupATitleResult').textContent = document.getElementById('groupNameA').value;
-        document.getElementById('valBetaA').textContent = resultsA.beta.toFixed(4);
-        document.getElementById('valEtaA').textContent = resultsA.eta.toFixed(2);
-        document.getElementById('valR2A').textContent = resultsA.r2.toFixed(4);
-        document.getElementById('descTextA').textContent = resultsA.typeText;
+        let interpret = '⚠️ 改進效果不明顯';
+        if (eDiff > 10) interpret = '🚀 優化成效卓越';
+        else if (eDiff > 0) interpret = '✅ 方案具有小幅優勢';
+        document.getElementById('diffInterpretation').textContent = interpret;
     } else {
-        groupResultA.classList.remove('show');
-    }
-
-    if (resultsB) {
-        groupResultB.classList.add('show');
-        document.getElementById('groupBTitleResult').textContent = document.getElementById('groupNameB').value;
-        document.getElementById('valBetaB').textContent = resultsB.beta.toFixed(4);
-        document.getElementById('valEtaB').textContent = resultsB.eta.toFixed(2);
-        document.getElementById('valR2B').textContent = resultsB.r2.toFixed(4);
-        document.getElementById('descTextB').textContent = resultsB.typeText;
-    } else {
-        groupResultB.classList.remove('show');
-    }
-
-    if (resultsA && resultsB) {
-        diffPanel.classList.add('show');
-        const betaDiff = ((resultsB.beta - resultsA.beta) / resultsA.beta * 100);
-        const etaDiff = ((resultsB.eta - resultsA.eta) / resultsA.eta * 100);
-
-        document.getElementById('diffBeta').textContent = (betaDiff >= 0 ? '+' : '') + betaDiff.toFixed(2) + '%';
-        document.getElementById('diffEta').textContent = (etaDiff >= 0 ? '+' : '') + etaDiff.toFixed(2) + '%';
-        document.getElementById('diffImprovement').textContent = (etaDiff >= 0 ? '+' : '') + etaDiff.toFixed(2) + '%';
-
-        let interpretation = '';
-        if (etaDiff > 10) interpretation = '✅ 組別 B 壽命顯著優於組別 A';
-        else if (etaDiff > 0) interpretation = '✓ 組別 B 壽命略優於組別 A';
-        else if (etaDiff > -10) interpretation = '≈ 兩組壽命相近';
-        else interpretation = '⚠️ 組別 B 壽命低於組別 A';
-        document.getElementById('diffInterpretation').textContent = interpretation;
-    } else {
-        diffPanel.classList.remove('show');
+        diffPanel.style.display = 'none';
     }
 }
 
-// ========== Plotly 圖表繪製功能 ==========
-function drawCharts(resultsA, resultsB) {
-    t95PointsData = [];
-    const groupNameA = document.getElementById('groupNameA').value;
-    const groupNameB = document.getElementById('groupNameB').value;
+// --- Visualizations ---
+function drawAnalytics(resA, resB) {
+    const colA = '#2563eb', colB = '#e11d48';
 
-    const colorA = getComputedStyle(document.documentElement).getPropertyValue('--group-a-color').trim() || '#4361ee';
-    const colorB = getComputedStyle(document.documentElement).getPropertyValue('--group-b-color').trim() || '#f72585';
-
-    // ===== Probability Plot =====
+    // 1. Prob Plot
     let probTraces = [];
-    if (resultsA) {
-        let minX = Math.min(...resultsA.points.map(p => p.x));
-        let maxX = Math.max(...resultsA.points.map(p => p.x));
-        probTraces.push({
-            x: resultsA.points.map(p => p.x),
-            y: resultsA.points.map(p => p.y),
-            mode: 'markers',
-            type: 'scatter',
-            name: `${groupNameA} - 數據點`,
-            marker: { color: colorA, size: 8, line: { width: 1, color: 'white' } }
-        });
-        probTraces.push({
-            x: [minX - 0.5, maxX + 0.5],
-            y: [resultsA.slope * (minX - 0.5) + resultsA.intercept, resultsA.slope * (maxX + 0.5) + resultsA.intercept],
-            mode: 'lines',
-            type: 'scatter',
-            name: `${groupNameA} - 擬合線`,
-            line: { color: colorA, width: 2, dash: 'dash' }
-        });
-    }
+    if (resA) addTracesToProb(probTraces, resA, document.getElementById('groupNameA').value, colA);
+    if (resB) addTracesToProb(probTraces, resB, document.getElementById('groupNameB').value, colB);
 
-    if (resultsB) {
-        let minX = Math.min(...resultsB.points.map(p => p.x));
-        let maxX = Math.max(...resultsB.points.map(p => p.x));
-        probTraces.push({
-            x: resultsB.points.map(p => p.x),
-            y: resultsB.points.map(p => p.y),
-            mode: 'markers',
-            type: 'scatter',
-            name: `${groupNameB} - 數據點`,
-            marker: { color: colorB, size: 8, line: { width: 1, color: 'white' } }
-        });
-        probTraces.push({
-            x: [minX - 0.5, maxX + 0.5],
-            y: [resultsB.slope * (minX - 0.5) + resultsB.intercept, resultsB.slope * (maxX + 0.5) + resultsB.intercept],
-            mode: 'lines',
-            type: 'scatter',
-            name: `${groupNameB} - 擬合線`,
-            line: { color: colorB, width: 2, dash: 'dash' }
-        });
-    }
-
-    const probLayout = {
-        title: { text: 'Weibull Probability Plot', font: { family: 'Outfit, sans-serif', size: 18, color: '#1e293b' } },
+    Plotly.newPlot('chartProb', probTraces, {
         xaxis: { title: 'ln(t)', gridcolor: '#f1f5f9' },
         yaxis: { title: 'ln(-ln(1-F(t)))', gridcolor: '#f1f5f9' },
-        plot_bgcolor: 'white',
-        paper_bgcolor: 'white',
-        margin: { l: 60, r: 20, t: 60, b: 60 },
-        legend: { x: 0, y: 1, bgcolor: 'rgba(255, 255, 255, 0.8)' },
-        font: { family: 'Inter, sans-serif' }
-    };
+        margin: { l: 60, r: 20, t: 10, b: 60 },
+        legend: { x: 0, y: 1 },
+        font: { family: 'Inter' }
+    }, { responsive: true, displaylogo: false });
 
-    Plotly.newPlot('chartProb', probTraces, probLayout, { responsive: true, displaylogo: false });
-
-    // ===== Reliability Curve =====
+    // 2. Reliability Curve
     let relTraces = [];
-    if (resultsA) {
-        let x = [], y = [];
-        let max = resultsA.maxT * 1.5;
-        for (let t = 0; t <= max; t += max / 200) {
-            x.push(t);
-            y.push(Math.exp(-Math.pow(t / resultsA.eta, resultsA.beta)) * 100);
-        }
-        relTraces.push({ x, y, mode: 'lines', name: `${groupNameA} - R(t)`, line: { color: colorA, width: 3 } });
-    }
+    if (resA) addTracesToRel(relTraces, resA, document.getElementById('groupNameA').value, colA);
+    if (resB) addTracesToRel(relTraces, resB, document.getElementById('groupNameB').value, colB);
 
-    if (resultsB) {
-        let x = [], y = [];
-        let max = resultsB.maxT * 1.5;
-        for (let t = 0; t <= max; t += max / 200) {
-            x.push(t);
-            y.push(Math.exp(-Math.pow(t / resultsB.eta, resultsB.beta)) * 100);
-        }
-        relTraces.push({ x, y, mode: 'lines', name: `${groupNameB} - R(t)`, line: { color: colorB, width: 3 } });
-    }
-
-    const relLayout = {
-        title: { text: 'Reliability Curve Comparison', font: { family: 'Outfit, sans-serif', size: 18, color: '#1e293b' } },
-        xaxis: { title: '壽命 (t)', gridcolor: '#f1f5f9' },
-        yaxis: { title: '可靠度 (%)', range: [0, 100], gridcolor: '#f1f5f9' },
-        plot_bgcolor: 'white',
-        paper_bgcolor: 'white',
-        margin: { l: 60, r: 20, t: 60, b: 60 },
+    Plotly.newPlot('chartRel', relTraces, {
+        xaxis: { title: '壽命 (Time/Cycles)', gridcolor: '#f1f5f9' },
+        yaxis: { title: '可靠度 R(t) %', range: [0, 105], gridcolor: '#f1f5f9' },
+        margin: { l: 60, r: 20, t: 10, b: 60 },
         legend: { x: 1, xanchor: 'right', y: 1 },
-        font: { family: 'Inter, sans-serif' }
-    };
+        font: { family: 'Inter' }
+    }, { responsive: true, displaylogo: false });
 
-    Plotly.newPlot('chartRel', relTraces, relLayout, { responsive: true, displaylogo: false });
-
-    if (markerReliabilityPercent) updateReliabilityMarkers(markerReliabilityPercent);
+    updateReliabilityMarkers(markerReliabilityPercent);
 }
 
-function updateReliabilityMarkers(percent) {
-    if (!analysisResults || (!analysisResults.groupA && !analysisResults.groupB)) return;
-    const R = percent / 100;
-    const shapes = [];
-    const annotations = [];
+function addTracesToProb(traces, res, name, color) {
+    traces.push({
+        x: res.points.map(p => p.x), y: res.points.map(p => p.y),
+        mode: 'markers', name: name, marker: { color, size: 8 }
+    });
+    const minX = Math.min(...res.points.map(p => p.x)), maxX = Math.max(...res.points.map(p => p.x));
+    traces.push({
+        x: [minX - 0.2, maxX + 0.2], y: [res.slope * (minX - 0.2) + res.intercept, res.slope * (maxX + 0.2) + res.intercept],
+        mode: 'lines', name: `${name} Fit`, line: { color, dash: 'dot', width: 1 }
+    });
+}
 
-    const groupNameA = document.getElementById('groupNameA')?.value || 'A';
-    const groupNameB = document.getElementById('groupNameB')?.value || 'B';
-    const colorA = getComputedStyle(document.documentElement).getPropertyValue('--group-a-color').trim() || '#4361ee';
-    const colorB = getComputedStyle(document.documentElement).getPropertyValue('--group-b-color').trim() || '#f72585';
-
-    const relDiv = document.getElementById('chartRel');
-    if (relDiv && relDiv.data) {
-        const deleteIdx = [];
-        relDiv.data.forEach((tr, i) => {
-            if (tr?.name === '__markerA__' || tr?.name === '__markerB__') deleteIdx.push(i);
-        });
-        if (deleteIdx.length) Plotly.deleteTraces('chartRel', deleteIdx);
+function addTracesToRel(traces, res, name, color) {
+    let x = [], y = [];
+    const max = res.maxT * 2;
+    for (let t = 0; t <= max; t += max / 200) {
+        x.push(t);
+        y.push(Math.exp(-Math.pow(t / res.eta, res.beta)) * 100);
     }
+    traces.push({ x, y, mode: 'lines', name: `${name} R(t)`, line: { color, width: 3 } });
+}
 
-    if (analysisResults.groupA) {
-        const tA = analysisResults.groupA.eta * Math.pow(-Math.log(R), 1 / analysisResults.groupA.beta);
-        shapes.push({ type: 'line', x0: tA, x1: tA, y0: 0, y1: 100, line: { color: colorA, width: 2, dash: 'dot' } });
-        annotations.push({ x: tA, y: 85, text: `${groupNameA}: B${100 - percent}=${tA.toFixed(2)}`, showarrow: false, bgcolor: 'white', bordercolor: colorA, borderwidth: 1 });
-        Plotly.addTraces('chartRel', [{ x: [tA], y: [percent], mode: 'markers', name: '__markerA__', showlegend: false, marker: { size: 10, color: colorA, line: { width: 2, color: 'white' } } }]);
-    }
+function updateReliabilityMarkers(pct) {
+    if (!analysisResults) return;
+    const shapes = [], annotations = [];
+    const R = pct / 100;
 
-    if (analysisResults.groupB) {
-        const tB = analysisResults.groupB.eta * Math.pow(-Math.log(R), 1 / analysisResults.groupB.beta);
-        shapes.push({ type: 'line', x0: tB, x1: tB, y0: 0, y1: 100, line: { color: colorB, width: 2, dash: 'dot' } });
-        annotations.push({ x: tB, y: 70, text: `${groupNameB}: B${100 - percent}=${tB.toFixed(2)}`, showarrow: false, bgcolor: 'white', bordercolor: colorB, borderwidth: 1 });
-        Plotly.addTraces('chartRel', [{ x: [tB], y: [percent], mode: 'markers', name: '__markerB__', showlegend: false, marker: { size: 10, color: colorB, line: { width: 2, color: 'white' } } }]);
-    }
+    ['A', 'B'].forEach(tag => {
+        const res = analysisResults[`group${tag}`];
+        if (!res) return;
+        const color = getComputedStyle(document.documentElement).getPropertyValue(tag === 'A' ? '--brand-accent-a' : '--brand-accent-b').trim();
+        const t = res.eta * Math.pow(-Math.log(R), 1 / res.beta);
+        shapes.push({ type: 'line', x0: t, x1: t, y0: 0, y1: pct, line: { color, width: 2, dash: 'dash' } });
+        annotations.push({ x: t, y: pct + 5, text: `B${Math.round(100 - pct)}=${Math.round(t)}`, showarrow: false, font: { weight: 700, color } });
+    });
 
     Plotly.relayout('chartRel', { shapes, annotations });
 }
 
-// ========== 數據和圖表匯出功能 ==========
-function exportData() {
-    if (!analysisResults) { alert("❌ 請先執行分析！"); return; }
-    const mode = analysisResults.mode;
-    let csv = `\ufeffWeibull Analysis Report\n\n`;
-    
-    // Simplistic export for brevity in this assistant example
-    csv += "Group,Beta,Eta,R2,Mode\n";
-    if (analysisResults.groupA) csv += `A,${analysisResults.groupA.beta},${analysisResults.groupA.eta},${analysisResults.groupA.r2},${analysisResults.groupA.typeText}\n`;
-    if (analysisResults.groupB) csv += `B,${analysisResults.groupB.beta},${analysisResults.groupB.eta},${analysisResults.groupB.r2},${analysisResults.groupB.typeText}\n`;
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `Weibull_Analysis_${new Date().getTime()}.csv`;
-    link.click();
+// --- Utils & UI ---
+function loadDemoCombined() {
+    dataGroupA = [{ t: 300, s: 'F' }, { t: 450, s: 'F' }, { t: 150, s: 'F' }, { t: 600, s: 'S' }, { t: 400, s: 'F' }, { t: 200, s: 'F' }];
+    dataGroupB = dataGroupA.map(d => ({ t: Math.round(d.t * 1.35), s: d.s }));
+    updateTable('A'); updateTable('B');
+    alert("✨ 示範數據已加載：展示 B 方案較 A 方案提升 35% 壽命的情境。");
 }
 
-function exportCharts() {
-    if (!analysisResults) { alert("❌ 請先執行分析！"); return; }
-    Plotly.downloadImage('chartProb', { format: 'png', width: 1200, height: 800, filename: 'Weibull_Prob_Plot' });
-    setTimeout(() => {
-        Plotly.downloadImage('chartRel', { format: 'png', width: 1200, height: 800, filename: 'Weibull_Rel_Curve' });
-    }, 500);
+function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+function openTheoryTab(id) {
+    document.getElementById('theoryModal').style.display = 'flex';
+    switchTheoryTab(id);
 }
 
-async function generateReport() {
-    if (!analysisResults) { alert("❌ 請先執行分析！"); return; }
-    const reportArea = document.getElementById('reportArea');
-    const canvas = await html2canvas(reportArea, { scale: 2 });
-    const link = document.createElement('a');
-    link.href = canvas.toDataURL('image/png');
-    link.download = `Report_${new Date().getTime()}.png`;
-    link.click();
+function switchTheoryTab(id) {
+    document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
+    document.querySelectorAll('.theory-section').forEach(s => s.style.display = 'none');
+
+    const targetLink = Array.from(document.querySelectorAll('.tab-link')).find(l => l.innerText.includes(
+        id === 'basics' ? '基礎' : id === 'params' ? '參數' : id === 'blife' ? 'B-Life' : '樣本'
+    ));
+    if (targetLink) targetLink.classList.add('active');
+    document.getElementById(`theory-${id}`).style.display = 'block';
 }
 
-function openTheory() { document.getElementById('theoryModal').style.display = 'flex'; }
 function closeTheory() { document.getElementById('theoryModal').style.display = 'none'; }
+
+function exportData() {
+    if (!analysisResults) return alert("❌ 無分析數據可匯出");
+    let csv = "\ufeff實驗組,Beta,Eta,R2,失效模式\n";
+    if (analysisResults.groupA) csv += `Group A,${analysisResults.groupA.beta},${analysisResults.groupA.eta},${analysisResults.groupA.r2},${analysisResults.groupA.typeText}\n`;
+    if (analysisResults.groupB) csv += `Group B,${analysisResults.groupB.beta},${analysisResults.groupB.eta},${analysisResults.groupB.r2},${analysisResults.groupB.typeText}\n`;
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Weibull_Export_${new Date().getTime()}.csv`;
+    link.click();
+}
+
+function generateReport() {
+    html2canvas(document.getElementById('reportArea')).then(canvas => {
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = `Mouldex_Weibull_Report.png`;
+        link.click();
+    });
+}
