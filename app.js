@@ -9,6 +9,26 @@ let analysisResults = null;
 let markerReliabilityPercent = 95;
 let currentBatchGroup = '';
 
+/**
+ * 載入單組範例數據
+ */
+function loadDemo(group) {
+    const originalData = [
+        { t: 300, s: 'F' }, { t: 100, s: 'F' }, { t: 250, s: 'S' },
+        { t: 150, s: 'F' }, { t: 550, s: 'F' }, { t: 120, s: 'S' },
+        { t: 400, s: 'F' }, { t: 200, s: 'F' }
+    ];
+
+    const target = (group === 'A') ? originalData : originalData.map(d => ({ t: Math.round(d.t * 1.25 * 10) / 10, s: d.s }));
+
+    if (group === 'A') dataGroupA = target;
+    else dataGroupB = target;
+
+    sortData(group);
+    updateTable(group);
+    alert(`✅ 已載入組別 ${group} 的範例數據！`);
+}
+
 // --- Initialization ---
 window.onload = function () {
     setupEventListeners();
@@ -364,27 +384,18 @@ function loadDemoCombined() {
     runAnalysis();
 
     document.getElementById('resultPanel').scrollIntoView({ behavior: 'smooth' });
-    alert("✅ 專業工程範例已載入：\n\n組別 A：基準方案 (典型磨耗模式，Beta ≈ 2.5)\n組別 B：優化方案 (高一致性加工，Beta ≈ 3.5)\n此組數據更能體現 Mouldex 設計優化後的顯著差異。");
+    alert("✅ 專業工程範例已載入：\n\n組別 A：基準方案 (典型磨耗模式，Beta ~ 2.5)\n組別 B：優化方案 (高一致性加工，Beta ~ 3.5)\n此組數據更能體現 Mouldex 設計優化後的顯著差異。");
 }
 
-/**
- * 額外支援單組載入原版數據 (供 UI 按鈕使用)
- */
-function loadDemo(group) {
-    const originalData = [
-        { t: 300, s: 'F' }, { t: 100, s: 'F' }, { t: 250, s: 'S' },
-        { t: 150, s: 'F' }, { t: 550, s: 'F' }, { t: 120, s: 'S' },
-        { t: 400, s: 'F' }, { t: 200, s: 'F' }
-    ];
-
-    const target = (group === 'A') ? originalData : originalData.map(d => ({ t: Math.round(d.t * 1.25 * 10) / 10, s: d.s }));
-
-    if (group === 'A') dataGroupA = target;
-    else dataGroupB = target;
-
-    sortData(group);
-    updateTable(group);
-    alert(`✅ 已載入組別 ${group} 的原版範例數據！`);
+function exportSingleChart(chartId) {
+    if (!document.getElementById(chartId)) return;
+    const title = chartId === 'chartProb' ? 'Weibull_Prob_Plot' : 'Reliability_Curve';
+    Plotly.downloadImage(chartId, {
+        format: 'png',
+        width: 1200,
+        height: 800,
+        filename: `Mouldex_${title}_${new Date().getTime()}`
+    });
 }
 
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
