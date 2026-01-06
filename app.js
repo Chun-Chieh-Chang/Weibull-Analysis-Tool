@@ -264,10 +264,11 @@ function drawAnalytics(resA, resB) {
     if (resB) addTracesToProb(probTraces, resB, document.getElementById('groupNameB').value, colB);
 
     Plotly.newPlot('chartProb', probTraces, {
-        xaxis: { title: 'ln(t)', gridcolor: '#f1f5f9' },
-        yaxis: { title: 'ln(-ln(1-F(t)))', gridcolor: '#f1f5f9' },
-        margin: { l: 60, r: 20, t: 10, b: 60 },
-        legend: { x: 0, y: 1 },
+        title: { text: 'Weibull Probability Plot (擬合優度分析)', font: { size: 16, weight: 'bold' } },
+        xaxis: { title: 'ln(t) - 時間自然對數', gridcolor: '#f1f5f9' },
+        yaxis: { title: 'ln(-ln(1-F(t))) - 累積失效轉換值', gridcolor: '#f1f5f9' },
+        margin: { l: 60, r: 20, t: 50, b: 60 },
+        legend: { x: 0, y: 1, bgcolor: 'rgba(255,255,255,0.7)' },
         font: { family: 'Inter' }
     }, { responsive: true, displaylogo: false });
 
@@ -277,10 +278,11 @@ function drawAnalytics(resA, resB) {
     if (resB) addTracesToRel(relTraces, resB, document.getElementById('groupNameB').value, colB);
 
     Plotly.newPlot('chartRel', relTraces, {
-        xaxis: { title: '壽命 (Time/Cycles)', gridcolor: '#f1f5f9' },
-        yaxis: { title: '可靠度 R(t) %', range: [0, 105], gridcolor: '#f1f5f9' },
-        margin: { l: 60, r: 20, t: 10, b: 60 },
-        legend: { x: 1, xanchor: 'right', y: 1 },
+        title: { text: 'Reliability Curve (可靠度隨時間衰減曲線)', font: { size: 16, weight: 'bold' } },
+        xaxis: { title: '壽命 (Time / Cycles)', gridcolor: '#f1f5f9' },
+        yaxis: { title: '可靠度機率 R(t) %', range: [0, 105], gridcolor: '#f1f5f9' },
+        margin: { l: 60, r: 20, t: 50, b: 60 },
+        legend: { x: 1, xanchor: 'right', y: 1, bgcolor: 'rgba(255,255,255,0.7)' },
         font: { family: 'Inter' }
     }, { responsive: true, displaylogo: false });
 
@@ -290,23 +292,28 @@ function drawAnalytics(resA, resB) {
 function addTracesToProb(traces, res, name, color) {
     traces.push({
         x: res.points.map(p => p.x), y: res.points.map(p => p.y),
-        mode: 'markers', name: name, marker: { color, size: 8 }
+        mode: 'markers', name: `${name} (數據點)`, marker: { color, size: 8, line: { width: 1, color: '#fff' } }
     });
     const minX = Math.min(...res.points.map(p => p.x)), maxX = Math.max(...res.points.map(p => p.x));
     traces.push({
-        x: [minX - 0.2, maxX + 0.2], y: [res.slope * (minX - 0.2) + res.intercept, res.slope * (maxX + 0.2) + res.intercept],
-        mode: 'lines', name: `${name} Fit`, line: { color, dash: 'dot', width: 1 }
+        x: [minX - 0.5, maxX + 0.5], y: [res.slope * (minX - 0.5) + res.intercept, res.slope * (maxX + 0.5) + res.intercept],
+        mode: 'lines', name: `${name} (擬合線)`, line: { color, dash: 'dot', width: 2, opacity: 0.5 }
     });
 }
 
 function addTracesToRel(traces, res, name, color) {
     let x = [], y = [];
-    const max = res.maxT * 2;
-    for (let t = 0; t <= max; t += max / 200) {
+    const displayRange = Math.max(res.eta * 2.2, res.maxT * 1.5);
+    for (let t = 0; t <= displayRange; t += displayRange / 200) {
         x.push(t);
-        y.push(Math.exp(-Math.pow(t / res.eta, res.beta)) * 100);
+        const Rt = Math.exp(-Math.pow(t / res.eta, res.beta)) * 100;
+        y.push(Rt);
     }
-    traces.push({ x, y, mode: 'lines', name: `${name} R(t)`, line: { color, width: 3 } });
+    traces.push({
+        x, y, mode: 'lines', name: `${name} 可靠度`,
+        line: { color, width: 4, shape: 'spline' },
+        fill: 'tozeroy', fillcolor: color.replace(')', ', 0.05)').replace('rgb', 'rgba')
+    });
 }
 
 function updateReliabilityMarkers(pct) {
