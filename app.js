@@ -469,15 +469,61 @@ function switchTheoryTab(id) {
 function closeTheory() { document.getElementById('theoryModal').style.display = 'none'; }
 
 function exportData() {
-    if (!analysisResults) return alert("❌ 無分析數據可匯出");
-    let csv = "\ufeff實驗組,Beta,Eta,R2,失效模式\n";
-    if (analysisResults.groupA) csv += `Group A,${analysisResults.groupA.beta},${analysisResults.groupA.eta},${analysisResults.groupA.r2},${analysisResults.groupA.typeText}\n`;
-    if (analysisResults.groupB) csv += `Group B,${analysisResults.groupB.beta},${analysisResults.groupB.eta},${analysisResults.groupB.r2},${analysisResults.groupB.typeText}\n`;
+    if (!analysisResults) return alert("❌ 無分析數據可匯出，請先執行分析。");
 
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const nameA = document.getElementById('groupNameA').value;
+    const nameB = document.getElementById('groupNameB').value;
+
+    let csvContent = "\ufeffMouldex Weibull 分析完整數據報告\n";
+    csvContent += `匯出時間,${new Date().toLocaleString()}\n\n`;
+
+    // 1. 彙總統計摘要
+    csvContent += "=== 1. 核心參數彙總統計 ===\n";
+    csvContent += "項目,Group A (實驗組A),Group B (實驗組B),Delta (差異)\n";
+
+    const getVal = (g, key) => (analysisResults[`group${g}`] ? analysisResults[`group${g}`][key] : '-');
+    const betaA = getVal('A', 'beta'), betaB = getVal('B', 'beta');
+    const etaA = getVal('A', 'eta'), etaB = getVal('B', 'eta');
+
+    csvContent += `形狀參數 (Beta β),${typeof betaA === 'number' ? betaA.toFixed(4) : '-'},${typeof betaB === 'number' ? betaB.toFixed(4) : '-'},${(typeof betaA === 'number' && typeof betaB === 'number') ? (((betaB - betaA) / betaA * 100).toFixed(2) + '%') : '-'}\n`;
+    csvContent += `特徵壽命 (Eta η),${typeof etaA === 'number' ? etaA.toFixed(2) : '-'},${typeof etaB === 'number' ? etaB.toFixed(2) : '-'},${(typeof etaA === 'number' && typeof etaB === 'number') ? (((etaB - etaA) / etaA * 100).toFixed(2) + '%') : '-'}\n`;
+    csvContent += `擬合優度 (R²),${typeof getVal('A', 'r2') === 'number' ? getVal('A', 'r2').toFixed(4) : '-'},${typeof getVal('B', 'r2') === 'number' ? getVal('B', 'r2').toFixed(4) : '-'}\n`;
+    csvContent += `失效模式判讀,${getVal('A', 'typeText')},${getVal('B', 'typeText')}\n\n`;
+
+    // 2. 原始數據對照表
+    csvContent += "=== 2. 原始壽命試驗數據對照 ===\n";
+    csvContent += `,,[ ${nameA} ],,,,[ ${nameB} ]\n`;
+    csvContent += "序號,壽命 (t),狀態 (F/S),,序號,壽命 (t),狀態 (F/S)\n";
+
+    const maxLen = Math.max(dataGroupA.length, dataGroupB.length);
+    for (let i = 0; i < maxLen; i++) {
+        const rowA = dataGroupA[i] ? `${i + 1},${dataGroupA[i].t},${dataGroupA[i].s === 'F' ? '失效(F)' : '設限(S)'}` : ",,";
+        const rowB = dataGroupB[i] ? `${i + 1},${dataGroupB[i].t},${dataGroupB[i].s === 'F' ? '失效(F)' : '設限(S)'}` : ",,";
+        csvContent += `${rowA},,,,${rowB}\n`;
+    }
+    csvContent += "\n";
+
+    // 3. B-Life 計算結果
+    csvContent += "=== 3. 工程指標 B-Life 壽命預測 ===\n";
+    csvContent += "指標機率 (Bx),Group A 預估壽命,Group B 預估壽命,改善率 (%)\n";
+
+    const bLifeLevels = [1, 5, 10, 20, 50, 63.2];
+    bLifeLevels.forEach(b => {
+        const R = (100 - b) / 100;
+        const calcT = (g) => {
+            const res = analysisResults[`group${g}`];
+            if (!res) return null;
+            return res.eta * Math.pow(-Math.log(R), 1 / res.beta);
+        };
+        const tA = calcT('A'), tB = calcT('B');
+        const impr = (tA && tB) ? ((tB - tA) / tA * 100).toFixed(1) + '%' : '-';
+        csvContent += `B${b},${tA ? Math.round(tA) : '-'},${tB ? Math.round(tB) : '-'},${impr}\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `Weibull_Export_${new Date().getTime()}.csv`;
+    link.download = `Mouldex_Weibull_FullReport_${new Date().getTime()}.csv`;
     link.click();
 }
 
