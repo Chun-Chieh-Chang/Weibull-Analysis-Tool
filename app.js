@@ -218,15 +218,17 @@ function displayUIResults(resA, resB) {
 
     const updateStats = (tag, res) => {
         const el = document.getElementById(`groupResult${tag}`);
-        if (res) {
-            el.style.display = 'block';
-            document.getElementById(`group${tag}TitleResult`).textContent = document.getElementById(`groupName${tag}`).value;
-            document.getElementById(`valBeta${tag}`).textContent = res.beta.toFixed(3);
-            document.getElementById(`valEta${tag}`).textContent = Math.round(res.eta).toLocaleString();
-            document.getElementById(`valR2${tag}`).textContent = res.r2.toFixed(4);
-            document.getElementById(`descText${tag}`).textContent = res.typeText;
-        } else {
-            el.style.display = 'none';
+        if (el) {
+            if (res) {
+                el.style.display = 'block';
+                document.getElementById(`group${tag}TitleResult`).textContent = document.getElementById(`groupName${tag}`).value;
+                document.getElementById(`valBeta${tag}`).textContent = res.beta.toFixed(3);
+                document.getElementById(`valEta${tag}`).textContent = Math.round(res.eta).toLocaleString();
+                document.getElementById(`valR2${tag}`).textContent = res.r2.toFixed(4);
+                document.getElementById(`descText${tag}`).textContent = res.typeText;
+            } else {
+                el.style.display = 'none';
+            }
         }
     };
 
