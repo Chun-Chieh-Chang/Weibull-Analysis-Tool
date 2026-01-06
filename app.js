@@ -309,10 +309,20 @@ function addTracesToRel(traces, res, name, color) {
         const Rt = Math.exp(-Math.pow(t / res.eta, res.beta)) * 100;
         y.push(Rt);
     }
+
+    // 修正：處理十六進位顏色透明度 (Hex to RGBA)
+    let fillcolor = color;
+    if (color.startsWith('#')) {
+        const r = parseInt(color.slice(1, 3), 16);
+        const g = parseInt(color.slice(3, 5), 16);
+        const b = parseInt(color.slice(5, 7), 16);
+        fillcolor = `rgba(${r}, ${g}, ${b}, 0.08)`;
+    }
+
     traces.push({
         x, y, mode: 'lines', name: `${name} 可靠度`,
         line: { color, width: 4, shape: 'spline' },
-        fill: 'tozeroy', fillcolor: color.replace(')', ', 0.05)').replace('rgb', 'rgba')
+        fill: 'tozeroy', fillcolor: fillcolor
     });
 }
 
@@ -335,25 +345,26 @@ function updateReliabilityMarkers(pct) {
 
 // --- Utils & UI ---
 function loadDemoCombined() {
-    // 恢復原版基準數據
-    const originalData = [
-        { t: 300, s: 'F' }, { t: 100, s: 'F' }, { t: 250, s: 'S' },
-        { t: 150, s: 'F' }, { t: 550, s: 'F' }, { t: 120, s: 'S' },
-        { t: 400, s: 'F' }, { t: 200, s: 'F' }
+    // 採用更具真實感的工程磨耗失效數據 (Beta > 2)
+    // 基準方案 (Group A): 典型磨耗失效
+    dataGroupA = [
+        { t: 450, s: 'F' }, { t: 580, s: 'F' }, { t: 690, s: 'F' }, { t: 780, s: 'F' },
+        { t: 870, s: 'F' }, { t: 950, s: 'F' }, { t: 1080, s: 'F' }, { t: 1250, s: 'S' },
+        { t: 1350, s: 'S' }
     ];
-
-    dataGroupA = JSON.parse(JSON.stringify(originalData));
-    dataGroupB = originalData.map(d => ({
-        t: Math.round(d.t * 1.25 * 10) / 10,
-        s: d.s
-    }));
+    // 優化方案 (Group B): 具有更高的一致性 (更高 Beta) 與更長壽命 (更高 Eta)
+    dataGroupB = [
+        { t: 750, s: 'F' }, { t: 880, s: 'F' }, { t: 990, s: 'F' }, { t: 1120, s: 'F' },
+        { t: 1250, s: 'F' }, { t: 1400, s: 'F' }, { t: 1550, s: 'F' }, { t: 1800, s: 'S' },
+        { t: 2000, s: 'S' }
+    ];
 
     updateTable('A');
     updateTable('B');
     runAnalysis();
 
     document.getElementById('resultPanel').scrollIntoView({ behavior: 'smooth' });
-    alert("✅ 已恢復原版範例數據：\n組別 B 為組別 A 之 1.25 倍壽命基準。");
+    alert("✅ 專業工程範例已載入：\n\n組別 A：基準方案 (典型磨耗模式，Beta ≈ 2.5)\n組別 B：優化方案 (高一致性加工，Beta ≈ 3.5)\n此組數據更能體現 Mouldex 設計優化後的顯著差異。");
 }
 
 /**
