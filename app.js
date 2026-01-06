@@ -278,33 +278,58 @@ function displayUIResults(resA, resB) {
 function drawAnalytics(resA, resB) {
     const colA = '#2563eb', colB = '#e11d48';
 
+    const chartLayout = {
+        font: { family: 'Inter', color: '#1e293b' },
+        plot_bgcolor: '#ffffff',
+        paper_bgcolor: '#ffffff',
+        margin: { l: 70, r: 30, t: 60, b: 70 },
+        showlegend: true,
+        legend: {
+            bgcolor: 'rgba(255,255,255,0.8)',
+            bordercolor: '#f1f5f9',
+            borderwidth: 1,
+            font: { size: 11 }
+        },
+        xaxis: {
+            gridcolor: '#f1f5f9',
+            linecolor: '#e2e8f0',
+            zerolinecolor: '#e2e8f0',
+            title: { font: { size: 13, weight: 600 } }
+        },
+        yaxis: {
+            gridcolor: '#f1f5f9',
+            linecolor: '#e2e8f0',
+            zerolinecolor: '#e2e8f0',
+            title: { font: { size: 13, weight: 600 } }
+        }
+    };
+
     // 1. Prob Plot
     let probTraces = [];
     if (resA) addTracesToProb(probTraces, resA, document.getElementById('groupNameA').value, colA);
     if (resB) addTracesToProb(probTraces, resB, document.getElementById('groupNameB').value, colB);
 
-    Plotly.newPlot('chartProb', probTraces, {
-        title: { text: 'Weibull Probability Plot (擬合優度分析)', font: { size: 16, weight: 'bold' } },
-        xaxis: { title: 'ln(t) - 時間自然對數', gridcolor: '#f1f5f9' },
-        yaxis: { title: 'ln(-ln(1-F(t))) - 累積失效轉換值', gridcolor: '#f1f5f9' },
-        margin: { l: 60, r: 20, t: 50, b: 60 },
-        legend: { x: 0, y: 1, bgcolor: 'rgba(255,255,255,0.7)' },
-        font: { family: 'Inter' }
-    }, { responsive: true, displaylogo: false });
+    const layoutProb = JSON.parse(JSON.stringify(chartLayout));
+    layoutProb.title = { text: 'Weibull Probability Plot (擬合優度分析)', font: { size: 16, weight: 700 } };
+    layoutProb.xaxis.title.text = 'ln(t) - 自然對數時間';
+    layoutProb.yaxis.title.text = 'ln(-ln(1-F(t))) - 失效轉換值';
+    layoutProb.legend.x = 0; layoutProb.legend.y = 1;
+
+    Plotly.newPlot('chartProb', probTraces, layoutProb, { responsive: true, displaylogo: false });
 
     // 2. Reliability Curve
     let relTraces = [];
     if (resA) addTracesToRel(relTraces, resA, document.getElementById('groupNameA').value, colA);
     if (resB) addTracesToRel(relTraces, resB, document.getElementById('groupNameB').value, colB);
 
-    Plotly.newPlot('chartRel', relTraces, {
-        title: { text: 'Reliability Curve (可靠度隨時間衰減曲線)', font: { size: 16, weight: 'bold' } },
-        xaxis: { title: '壽命 (Time / Cycles)', gridcolor: '#f1f5f9' },
-        yaxis: { title: '可靠度機率 R(t) %', range: [0, 105], gridcolor: '#f1f5f9' },
-        margin: { l: 60, r: 20, t: 50, b: 60 },
-        legend: { x: 1, xanchor: 'right', y: 1, bgcolor: 'rgba(255,255,255,0.7)' },
-        font: { family: 'Inter' }
-    }, { responsive: true, displaylogo: false });
+    const layoutRel = JSON.parse(JSON.stringify(chartLayout));
+    layoutRel.title = { text: 'Reliability Evaluation (可靠度衰減趨勢)', font: { size: 16, weight: 700 } };
+    layoutRel.xaxis.title.text = '壽命週期 (Time / Cycles)';
+    layoutRel.yaxis.title.text = '可靠度機率 R(t) %';
+    layoutRel.yaxis.range = [0, 105];
+    layoutRel.legend.x = 1; layoutRel.legend.xanchor = 'right'; layoutRel.legend.y = 1;
+
+    Plotly.newPlot('chartRel', relTraces, layoutRel, { responsive: true, displaylogo: false });
 
     updateReliabilityMarkers(markerReliabilityPercent);
 }
@@ -317,7 +342,7 @@ function addTracesToProb(traces, res, name, color) {
     const minX = Math.min(...res.points.map(p => p.x)), maxX = Math.max(...res.points.map(p => p.x));
     traces.push({
         x: [minX - 0.5, maxX + 0.5], y: [res.slope * (minX - 0.5) + res.intercept, res.slope * (maxX + 0.5) + res.intercept],
-        mode: 'lines', name: `${name} (擬合線)`, line: { color, dash: 'dot', width: 2, opacity: 0.5 }
+        mode: 'lines', name: `${name} (擬合線)`, line: { color, dash: 'dot', width: 3, opacity: 0.6 }
     });
 }
 
@@ -341,7 +366,7 @@ function addTracesToRel(traces, res, name, color) {
 
     traces.push({
         x, y, mode: 'lines', name: `${name} 可靠度`,
-        line: { color, width: 4, shape: 'spline' },
+        line: { color, width: 3, shape: 'spline' },
         fill: 'tozeroy', fillcolor: fillcolor
     });
 }
@@ -385,6 +410,31 @@ function loadDemoCombined() {
 
     document.getElementById('resultPanel').scrollIntoView({ behavior: 'smooth' });
     alert("✅ 專業工程範例已載入：\n\n組別 A：基準方案 (典型磨耗模式，Beta ~ 2.5)\n組別 B：優化方案 (高一致性加工，Beta ~ 3.5)\n此組數據更能體現 Mouldex 設計優化後的顯著差異。");
+}
+
+function resetAll() {
+    if (!confirm("⚠️ 確定要抹除工作區內所有數據並重置圖表嗎？")) return;
+
+    dataGroupA = [];
+    dataGroupB = [];
+    analysisResults = null;
+
+    updateTable('A');
+    updateTable('B');
+
+    document.getElementById('resultPanel').style.display = 'none';
+    document.getElementById('diffPanel').style.display = 'none';
+
+    // 清除圖表內容
+    Plotly.purge('chartProb');
+    Plotly.purge('chartRel');
+
+    // 重置快速輸入
+    ['A', 'B'].forEach(tag => {
+        document.getElementById(`tInput${tag}`).value = '';
+    });
+
+    alert("✨ 工作區已重置：數據與曲線已全面清空。");
 }
 
 function exportSingleChart(chartId) {
