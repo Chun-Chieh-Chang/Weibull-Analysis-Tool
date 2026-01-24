@@ -1,4 +1,4 @@
-# Weibull 可靠度分析工具 (Weibull Analysis Tool)
+# WeibullAnalysis_for_ReliabilityCalculation
 
 這是一個專為可靠度工程設計的 Weibull 分析工具，具備現代化的網頁介面，支援數據輸入、參數估計、分佈繪圖以及可靠度計算。
 
