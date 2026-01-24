@@ -4,449 +4,2441 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WeibullAnalysis_for_ReliabilityCalculation</title>
+    <title>Weibull 可靠度分析 - 雙組比對版 (Mouldex專用)</title>
 
-    <!-- Library Inclusion -->
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Design System -->
-    <link rel="stylesheet" href="style.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #2d3748;
+        }
+
+        mjx-assistive-mml {
+            display: none !important;
+        }
+
+        .container {
+            max-width: 98%;
+            margin: 0 auto;
+            background: transparent;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 90vh;
+        }
+
+        h1.main-title {
+            text-align: center;
+            background: linear-gradient(to right, #2c3e50, #4ca1af);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            animation: fadeInUp 0.6s ease-out;
+            width: 95%;
+            margin: 0 auto;
+            max-width: 1150px;
+            /* Reduced to minimum comfortable width */
+            padding-bottom: 50px;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-left: 5px solid #4facfe;
+            padding-left: 15px;
+            background: linear-gradient(90deg, rgba(79, 172, 254, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+            padding-top: 5px;
+            padding-bottom: 5px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        h3 {
+            color: #2980b9;
+            margin-top: 25px;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            /* Micro gap */
+            justify-content: center;
+        }
+
+        .col-left {
+            flex: 1;
+            max-width: 340px;
+            /* Narrower to save space */
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .col-right {
+            flex: 1;
+            /* Let it grow but share space */
+            min-width: 600px;
+            max-width: 1000px;
+            /* Limit right column width to prevent excessive stretching */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .dual-input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .group-panel {
+            border: none;
+            border-radius: 12px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s;
+        }
+
+        .group-panel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .group-panel.group-a {
+            border-color: #3498db;
+        }
+
+        .group-panel.group-b {
+            border-color: #e74c3c;
+        }
+
+        .group-header {
+            font-size: 1em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            padding: 5px 0;
+            border-bottom: 2px solid;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: transparent;
+            text-align: left;
+        }
+
+        .group-header.group-a {
+            border-color: #4facfe;
+            color: #4facfe;
+            background: transparent;
+        }
+
+        .group-header.group-b {
+            border-color: #ff758c;
+            color: #ff758c;
+            background: transparent;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        input.calc-input,
+        select.calc-input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        input.calc-input:focus,
+        select.calc-input:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+        }
+
+        /* Modern Buttons */
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            transition: all 0.2s ease;
+            font-size: 0.9em;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .btn-add:hover {
+            filter: brightness(1.05);
+        }
+
+        .btn-add-b {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            /* Pinkish */
+            background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+        }
+
+        .btn-add-b:hover {
+            filter: brightness(1.05);
+        }
+
+        .btn-calc {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: #1a5c37;
+        }
+
+        .btn-demo {
+            background-color: #f39c12;
+        }
+
+        .btn-clear {
+            background: #95a5a6;
+        }
+
+        .btn-del {
+            background-color: #e74c3c;
+            width: auto;
+            padding: 4px 8px;
+            font-size: 0.75em;
+        }
+
+        .btn-uniform {
+            font-size: 0.95em;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
+            background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+            color: #4a2c6d;
+        }
+
+        .btn-report {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: #7a2e05;
+        }
+
+        .btn-clear-all {
+            background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);
+        }
+
+        .btn-theory {
+            background: #34495e;
+        }
+
+        .export-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .export-grid-three {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .export-grid-four {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .export-grid-five {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .export-grid-six {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        #reportArea {
+            position: relative;
+        }
+
+        .btn-batch {
+            background-color: #16a085;
+        }
+
+        .btn-batch:hover {
+            background-color: #1abc9c;
+        }
+
+        .btn-batch-b {
+            background-color: #16a085;
+        }
+
+        .btn-batch-b:hover {
+            background-color: #1abc9c;
+        }
+
+        /* 批次輸入彈出視窗 */
+        .batch-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .batch-modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .batch-modal-header {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .batch-textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            border: 2px solid #bdc3c7;
+            border-radius: 4px;
+            font-family: "Courier New", monospace;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        .batch-textarea:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .batch-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .batch-help {
+            background-color: #e8f6f3;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .table-container {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #34495e;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .result-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid #e1e8ed;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 5px;
+            /* Reduced margin */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            display: none;
+
+            /* Align width with charts */
+            margin-left: auto;
+            margin-right: auto;
+            width: 90%;
+            max-width: 1000px;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 5px;
+        }
+
+        .group-result {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid;
+            position: relative;
+        }
+
+        .group-result h4 {
+            margin: 0 0 8px 0;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .group-result.group-a {
+            border-color: #aed6f1;
+            background: linear-gradient(to bottom right, #ebf5fb, #fff);
+        }
+
+        .group-result.group-b {
+            border-color: #f5b7b1;
+            background: linear-gradient(to bottom right, #fdedec, #fff);
+        }
+
+        /* High Density Stat Row */
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.6);
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .stat-label {
+            font-size: 0.75em;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 1.1em;
+            font-weight: 700;
+            font-family: 'Segoe UI', monospace;
+        }
+
+        .desc-text {
+            font-size: 0.8em;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed rgba(0, 0, 0, 0.1);
+            color: #555;
+            display: block;
+        }
+
+        /* Compact Diff Panel */
+        .diff-panel {
+            background: linear-gradient(to right, #fff9c4, #fff);
+            border: 1px solid #f9e79f;
+            padding: 8px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .diff-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+            font-weight: 700;
+            color: #d68910;
+        }
+
+        .diff-stats-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            font-size: 0.9em;
+        }
+
+        .diff-val-item {
+            display: flex;
+            gap: 5px;
+        }
+
+        .diff-interpretation {
+            font-size: 0.85em;
+            color: #555;
+            margin-top: 2px;
+            font-style: italic;
+        }
+
+        /* Hidden Formula by default since we know it */
+        .formula-display {
+            display: none;
+        }
+
+        canvas {
+            background: #fff;
+            margin-top: 20px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        .control-buttons {
+            margin-top: 5px;
+            /* Reduced margin */
+
+            /* Align width with charts */
+            margin-left: auto;
+            margin-right: auto;
+            width: 90%;
+            max-width: 1000px;
+        }
+
+        /* 新增圖表並列樣式 - 垂直堆疊模式 (Vertical Stack) */
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            /* Force single column */
+            gap: 10px;
+            /* Reduced gap */
+            /* Increase gap between vertical charts */
+            margin: 5px auto 0 auto;
+            /* Reduced margin */
+            width: 90%;
+            max-width: 1000px;
+            /* Constrain width for better visual on vertical stack */
+            justify-content: center;
+        }
+
+        .chart-box {
+            background: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #eee;
+            min-width: 0;
+            margin: 0 auto;
+            /* Ensure centering */
+            width: 100%;
+        }
+
+        /* 16:9 Aspect Ratio implementation */
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16 / 9;
+        }
+
+        @supports not (aspect-ratio: 16 / 9) {
+            .chart-wrapper {
+                height: 0;
+                padding-bottom: 56.25%;
+            }
+
+            .chart-wrapper>div {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .charts-container {
+                width: 95%;
+            }
+        }
+        }
+        }
+
+        /* --- Single/Dual Mode Layout Adaptations --- */
+
+        /* Default (Dual) State adjustments if needed */
+        .mode-dual .group-panel {
+            flex: 0 0 auto;
+        }
+
+        /* Single Mode State */
+        .mode-single .group-panel.group-b {
+            display: none !important;
+        }
+
+        .mode-single .group-panel.group-a {
+            flex: 1;
+            /* Fill the sidebar height */
+            display: flex;
+            flex-direction: column;
+            min-height: 500px;
+        }
+
+        .mode-single .group-panel.group-a .table-container {
+            flex: 1;
+            /* Table takes remaining space in panel */
+            max-height: none;
+            /* Remove fixed height limit */
+            min-height: 200px;
+        }
+
+        .mode-single .comparison-grid {
+            grid-template-columns: 1fr;
+            /* Single column results */
+        }
+
+        .mode-single .group-result.group-b {
+            display: none !important;
+        }
+
+        /* Segmented Control Styles */
+        .mode-selector-container {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .mode-label {
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .segmented-control {
+            display: flex;
+            background: #f0f2f5;
+            border-radius: 8px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .segmented-control input[type="radio"] {
+            display: none;
+        }
+
+        .segmented-control .mode-btn {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 600;
+            color: #7f8c8d;
+            transition: all 0.3s ease;
+        }
+
+        .segmented-control input[type="radio"]:checked+.mode-btn {
+            background: white;
+            color: #2c3e50;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .segmented-control input[type="radio"]:not(:checked)+.mode-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+            color: #34495e;
+        }
+
+        .mode-label {
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .segmented-control {
+            display: flex;
+            background: #f0f2f5;
+            border-radius: 8px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .segmented-control input[type="radio"] {
+            display: none;
+        }
+
+        .segmented-control .mode-btn {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 600;
+            color: #7f8c8d;
+            transition: all 0.3s ease;
+        }
+
+        .segmented-control input[type="radio"]:checked+.mode-btn {
+            background: white;
+            color: #2c3e50;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .segmented-control input[type="radio"]:not(:checked)+.mode-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+            color: #34495e;
+        }
+    </style>
 </head>
 
 <body>
-    <!-- Top Navigation Bar -->
-    <header class="top-nav">
-        <div class="brand">
-            <i class="fas fa-microchip"></i>
-            MOULDEX WEIBULL ANALYTICS
-        </div>
-        <div class="nav-actions">
-            <button class="p-btn p-btn-outline" onclick="openTheoryTab('basics')">
-                <i class="fas fa-book-open"></i> 理論知識庫
-            </button>
-            <button class="p-btn p-btn-outline" onclick="exportData()">
-                <i class="fas fa-file-export"></i> 資料匯出
-            </button>
-            <button class="p-btn p-btn-outline" onclick="generateReport()">
-                <i class="fas fa-file-image"></i> 圖表導出
-            </button>
-        </div>
-    </header>
 
     <div class="container">
-        <!-- Page Intro -->
-        <div class="page-intro">
-            <h1>Weibull 可靠度分析平台</h1>
-            <p>專業級工程數據擬合、失效模式判定與比較分析系統</p>
-        </div>
-
-        <div class="nav-actions" style="margin-bottom: 24px; justify-content: flex-end;">
-            <button class="p-btn p-btn-outline" onclick="loadDemoCombined()">
-                <i class="fas fa-magic"></i> 載入基準範例
-            </button>
-            <button class="p-btn p-btn-ghost-red" onclick="resetAll()">
-                <i class="fas fa-trash-alt"></i> 清空重置
-            </button>
-            <button class="p-btn p-btn-indigo" onclick="runAnalysis()" style="background: #1e293b;">
-                <i class="fas fa-play"></i> 執行全局分析
-            </button>
-        </div>
-
         <div id="reportArea">
-            <div class="workbench-grid">
-                <!-- Group A Config -->
-                <section class="p-card">
-                    <div class="p-card-header">
-                        <h3><i class="fas fa-database"></i> 實驗組 A 配置</h3>
-                        <span class="p-badge p-badge-blue">Primary</span>
-                    </div>
-                    <div class="form-row">
-                        <div class="field">
-                            <label>組別名稱</label>
-                            <input type="text" id="groupNameA" class="p-input" value="原始設計 (Group A)">
-                        </div>
-                        <div class="field">
-                            <label>快速輸入 (t / s)</label>
-                            <div style="display:flex; gap:8px;">
-                                <input type="number" id="tInputA" class="p-input" placeholder="壽命 t">
-                                <select id="sInputA" class="p-input" style="width: 100px;">
-                                    <option value="F">失效(F)</option>
-                                    <option value="S">設限(S)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="nav-actions">
-                        <button class="p-btn p-btn-outline" style="padding: 6px 12px; font-size: 0.8rem;"
-                            onclick="showBatchInput('A')">
-                            <i class="fas fa-upload"></i> 批次匯入
-                        </button>
-                        <button class="p-btn p-btn-outline" style="padding: 6px 12px; font-size: 0.8rem;"
-                            onclick="loadDemo('A')">
-                            <i class="fas fa-vial"></i> 範例
-                        </button>
-                        <button class="p-btn p-btn-ghost-red" style="padding: 6px 12px; font-size: 0.8rem;"
-                            onclick="clearData('A')">
-                            <i class="fas fa-eraser"></i>
-                        </button>
-                    </div>
+            <h1 class="main-title">Weibull 可靠度分析</h1>
+            <p style="text-align: center; color: #7f8c8d; margin-top: -20px; margin-bottom: 20px;">
+                💡 支援單組或雙組數據分析與比對
+            </p>
 
-                    <div class="table-container">
-                        <table class="p-table" id="dataTableA">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>壽命 (t)</th>
-                                    <th>狀態</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td colspan="4" style="text-align:center; padding: 20px; color: #94a3b8;">請輸入數據</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+            <div class="row">
+                <div class="col-left">
+                    <div class="mode-selector-container">
+                        <div class="mode-label">分析模式 (Analysis Mode):</div>
+                        <div class="segmented-control">
+                            <input type="radio" name="analysisMode" value="single" id="modeSingle"
+                                onclick="setAnalysisMode('single')">
+                            <label for="modeSingle" class="mode-btn">單組分析 (Single)</label>
 
-                <!-- Group B Config -->
-                <section class="p-card">
-                    <div class="p-card-header">
-                        <h3><i class="fas fa-database"></i> 實驗組 B 配置</h3>
-                        <span class="p-badge p-badge-rose">Comparison</span>
-                    </div>
-                    <div class="form-row">
-                        <div class="field">
-                            <label>組別名稱</label>
-                            <input type="text" id="groupNameB" class="p-input" value="優化方案 (Group B)">
-                        </div>
-                        <div class="field">
-                            <label>快速輸入 (t / s)</label>
-                            <div style="display:flex; gap:8px;">
-                                <input type="number" id="tInputB" class="p-input" placeholder="壽命 t">
-                                <select id="sInputB" class="p-input" style="width: 100px;">
-                                    <option value="F">失效(F)</option>
-                                    <option value="S">設限(S)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="nav-actions">
-                        <button class="p-btn p-btn-outline" style="padding: 6px 12px; font-size: 0.8rem;"
-                            onclick="showBatchInput('B')">
-                            <i class="fas fa-upload"></i> 批次匯入
-                        </button>
-                        <button class="p-btn p-btn-outline" style="padding: 6px 12px; font-size: 0.8rem;"
-                            onclick="loadDemo('B')">
-                            <i class="fas fa-vial"></i> 範例
-                        </button>
-                        <button class="p-btn p-btn-ghost-red" style="padding: 6px 12px; font-size: 0.8rem;"
-                            onclick="clearData('B')">
-                            <i class="fas fa-eraser"></i>
-                        </button>
-                    </div>
-
-                    <div class="table-container">
-                        <table class="p-table" id="dataTableB">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>壽命 (t)</th>
-                                    <th>狀態</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td colspan="4" style="text-align:center; padding: 20px; color: #94a3b8;">請輸入數據</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- Results Output -->
-                <section class="p-card span-full" id="resultPanel" style="display:none;">
-                    <div class="p-card-header">
-                        <h3><i class="fas fa-calculator"></i> 分析擬合結果</h3>
-                        <div class="formula-display" style="font-size: 0.9rem; color: #64748b;">
-                            \( R(t) = e^{-(t/\eta)^\beta} \)
+                            <input type="radio" name="analysisMode" value="dual" id="modeDual" checked
+                                onclick="setAnalysisMode('dual')">
+                            <label for="modeDual" class="mode-btn">雙組比對 (Dual)</label>
                         </div>
                     </div>
 
-                    <div class="workbench-grid">
-                        <div id="groupResultA" style="border-left: 4px solid var(--accent-a); padding-left: 16px;">
-                            <h4 id="groupATitleResult" style="margin-bottom:12px;">Group A</h4>
-                            <div class="p-metrics-grid">
-                                <div class="p-metric-box"><span>Shape β</span><strong id="valBetaA">-</strong></div>
-                                <div class="p-metric-box"><span>Scale η</span><strong id="valEtaA">-</strong></div>
-                                <div class="p-metric-box"><span>Fitness R²</span><strong id="valR2A">-</strong></div>
+                    <div class="dual-input-container">
+                        <!-- 組別 A -->
+                        <div id="panelGroupA" class="group-panel group-a">
+                            <div class="group-header group-a">組別 A</div>
+                            <label>組別名稱:</label>
+                            <input type="text" id="groupNameA" class="calc-input" placeholder="例如: 原始設計" value="組別 A">
+                            <label>壽命 (t):</label>
+                            <input type="number" id="tInputA" class="calc-input" placeholder="輸入壽命後按 Enter" step="any">
+                            <label>狀態:</label>
+                            <select id="sInputA" class="calc-input">
+                                <option value="F">失效 (Failure)</option>
+                                <option value="S">右設限 (Suspended)</option>
+                            </select>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;">
+                                <button class="btn-add" onclick="showBatchInput('A')">批次輸入</button>
+                                <button class="btn-demo" onclick="loadDemo('A')">範例</button>
                             </div>
-                            <p id="descTextA" style="font-size:0.75rem; margin-top:8px; color:var(--p-gray);"></p>
+                            <button class="btn-clear" onclick="clearData('A')">清空</button>
+
+                            <div class="table-container">
+                                <table id="dataTableA">
+                                    <thead>
+                                        <tr>
+                                            <th>序號</th>
+                                            <th>壽命</th>
+                                            <th>狀態</th>
+                                            <th>刪除</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div id="groupResultB" style="border-left: 4px solid var(--accent-b); padding-left: 16px;">
-                            <h4 id="groupBTitleResult" style="margin-bottom:12px;">Group B</h4>
-                            <div class="p-metrics-grid">
-                                <div class="p-metric-box"><span>Shape β</span><strong id="valBetaB">-</strong></div>
-                                <div class="p-metric-box"><span>Scale η</span><strong id="valEtaB">-</strong></div>
-                                <div class="p-metric-box"><span>Fitness R²</span><strong id="valR2B">-</strong></div>
+
+                        <!-- 組別 B -->
+                        <div id="panelGroupB" class="group-panel group-b">
+                            <div class="group-header group-b">組別 B</div>
+                            <label>組別名稱:</label>
+                            <input type="text" id="groupNameB" class="calc-input" placeholder="例如: 改良設計" value="組別 B">
+                            <label>壽命 (t):</label>
+                            <input type="number" id="tInputB" class="calc-input" placeholder="輸入壽命後按 Enter" step="any">
+                            <label>狀態:</label>
+                            <select id="sInputB" class="calc-input">
+                                <option value="F">失效 (Failure)</option>
+                                <option value="S">右設限 (Suspended)</option>
+                            </select>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;">
+                                <button class="btn-add-b" onclick="showBatchInput('B')">批次輸入</button>
+                                <button class="btn-demo" onclick="loadDemo('B')">範例</button>
                             </div>
-                            <p id="descTextB" style="font-size:0.75rem; margin-top:8px; color:var(--p-gray);"></p>
+                            <button class="btn-clear" onclick="clearData('B')">清空</button>
+
+                            <div class="table-container">
+                                <table id="dataTableB">
+                                    <thead>
+                                        <tr>
+                                            <th>序號</th>
+                                            <th>壽命</th>
+                                            <th>狀態</th>
+                                            <th>刪除</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-right">
+                    <div id="resultPanel" class="result-panel">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:8px; margin-bottom:10px;">
+                            <h3 id="resultTitle" style="margin:0; font-size:1.1em;">分析結果</h3>
+                            <span style="font-family:'Times New Roman', serif; font-size:0.9em; color:#7f8c8d;">$$ R(t)
+                                = e^{-(t/\eta)^\beta} $$</span>
+                        </div>
+
+                        <div class="comparison-grid">
+                            <!-- Group A Card -->
+                            <div class="group-result group-a">
+                                <h4 style="color: #2980b9;">
+                                    組別 A
+                                    <span id="groupANameBadge" style="font-size:0.8em; opacity:0.7"></span>
+                                </h4>
+                                <div class="stat-row">
+                                    <div class="stat-item">
+                                        <span class="stat-label">β</span>
+                                        <span class="stat-value" id="valBetaA" style="color: #2980b9;">-</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">η</span>
+                                        <span class="stat-value" id="valEtaA" style="color: #2980b9;">-</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">R²</span>
+                                        <span class="stat-value" id="valR2A" style="color: #2980b9;">-</span>
+                                    </div>
+                                </div>
+                                <div id="descTextA" class="desc-text"></div>
+                            </div>
+
+                            <!-- Group B Card -->
+                            <div class="group-result group-b">
+                                <h4 style="color: #c0392b;">
+                                    組別 B
+                                    <span id="groupBNameBadge" style="font-size:0.8em; opacity:0.7"></span>
+                                </h4>
+                                <div class="stat-row">
+                                    <div class="stat-item">
+                                        <span class="stat-label">β</span>
+                                        <span class="stat-value" id="valBetaB" style="color: #c0392b;">-</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">η</span>
+                                        <span class="stat-value" id="valEtaB" style="color: #c0392b;">-</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">R²</span>
+                                        <span class="stat-value" id="valR2B" style="color: #c0392b;">-</span>
+                                    </div>
+                                </div>
+                                <div id="descTextB" class="desc-text"></div>
+                            </div>
+                        </div>
+
+                        <div class="diff-panel" id="diffPanel" style="display:none;">
+                            <div class="diff-header">
+                                <span>📊 差異分析 (B vs A)</span>
+                            </div>
+                            <div class="diff-stats-row">
+                                <div class="diff-val-item"><strong>Beta:</strong> <span id="diffBeta">-</span></div>
+                                <div class="diff-val-item"><strong>Eta:</strong> <span id="diffEta">-</span></div>
+                                <div class="diff-val-item"><strong>改善率:</strong> <span id="diffImprovement">-</span>
+                                </div>
+                            </div>
+                            <div id="diffInterpretation" class="diff-interpretation"></div>
+                        </div>
+                    </div>
+                    <div class="control-buttons">
+
+                        <div class="export-grid-six">
+                            <button id="btnRunAnalysis" class="btn-calc btn-uniform" onclick="runAnalysis()"
+                                style="width: auto; padding: 10px 20px;">🔍 開始分析</button>
+                            <button class="btn-export btn-uniform" onclick="exportData()">📊 數據匯出</button>
+                            <button class="btn-report btn-uniform" onclick="generateReport()">📄 產生報告</button>
+                            <button class="btn-clear-all btn-uniform" onclick="clearAllData()">🗑️ 清空全部</button>
+                            <button class="btn-theory btn-uniform" onclick="openTheory()">📘 理論指南</button>
                         </div>
                     </div>
 
-                    <div class="p-diff-panel" id="diffPanel" style="display:none;">
-                        <div class="p-diff-header">
-                            <div>
-                                <h3 style="margin-bottom: 4px;">壽命改進報告 (Executive Summary)</h3>
-                                <p style="color: var(--p-gray); font-size: 0.85rem;">Quantitative Life Improvement
-                                    Analysis</p>
+                    <div class="charts-container">
+                        <div class="chart-box">
+                            <h4 style="text-align:center; margin-bottom:10px; color:#555;">機率圖 (Probability Plot)</h4>
+                            <div class="chart-wrapper">
+                                <div id="chartProb"></div>
                             </div>
-                            <div id="diffInterpretation" class="p-diff-interpretation">-</div>
                         </div>
-                        <div class="p-metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
-                            <div class="p-metric-box">
-                                <span>Beta Delta</span>
-                                <strong id="diffBeta" style="color: var(--p-indigo);">-</strong>
+                        <div class="chart-box">
+                            <!-- Header Row with Input -->
+                            <div
+                                style="display:flex; justify-content:center; align-items:center; gap:15px; margin-bottom:10px;">
+                                <h4 style="text-align:center; margin:0; color:#555;">可靠度圖 (Reliability Plot)</h4>
+
+                                <div
+                                    style="display:flex; align-items:center; gap:8px; background:#f8f9fa; padding:4px 12px; border-radius:20px; border:1px solid #eee;">
+                                    <label for="markerRInput"
+                                        style="font-size:0.9em; font-weight:bold; color:#555; margin:0;">標示可靠度
+                                        R(%)</label>
+                                    <input type="number" id="markerRInput" class="calc-input" value="95" min="0.1"
+                                        max="99.9" step="0.1"
+                                        style="width:70px; padding:2px 6px; border:1px solid #ccc; border-radius:4px; text-align:center; font-size:0.95em;">
+                                </div>
                             </div>
-                            <div class="p-metric-box">
-                                <span>Eta Delta</span>
-                                <strong id="diffEta" style="color: var(--p-indigo);">-</strong>
-                            </div>
-                            <div class="p-metric-box" style="background: #eef2ff; border: 1px solid #c7d2fe;">
-                                <span style="color: var(--p-indigo);">Overall Improvement</span>
-                                <strong id="diffImprovement" style="color: var(--p-indigo);">-</strong>
+                            <div class="chart-wrapper">
+                                <div id="chartRel"></div>
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
+            </div>
 
-                <!-- Visualization Area -->
-                <div class="span-full charts-grid" style="margin-top: 24px;">
-                    <section class="chart-p-card">
-                        <div class="p-card-header">
-                            <h3><i class="fas fa-chart-area"></i> Weibull 擬合機率圖</h3>
-                            <button class="p-btn p-btn-outline" style="padding: 4px 8px; font-size: 0.75rem;"
-                                onclick="exportSingleChart('chartProb')">
-                                <i class="fas fa-download"></i>
-                            </button>
-                        </div>
-                        <div id="chartProb" style="height: 500px;"></div>
-                    </section>
+            <!-- 新增圖表並列區域 -->
+            <!-- Charts moved up -->
+        </div>
 
-                    <section class="chart-p-card">
-                        <div class="p-card-header">
-                            <h3><i class="fas fa-chart-line"></i> 可靠度隨時間衰減圖</h3>
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <label style="font-size:0.7rem; color:var(--p-gray); font-weight:700;">標示 R(t)%</label>
-                                <input type="number" id="inputReliability" value="95" class="p-input"
-                                    style="width:70px; padding:4px 8px;">
-                                <button class="p-btn p-btn-outline" style="padding: 4px 8px; font-size: 0.75rem;"
-                                    onclick="exportSingleChart('chartRel')">
-                                    <i class="fas fa-download"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="chartRel" style="height: 500px;"></div>
-                    </section>
+        <!-- 批次輸入彈出視窗 -->
+        <div id="batchModal" class="batch-modal">
+            <div class="batch-modal-content">
+                <div class="batch-modal-header" id="batchModalTitle">📋 批次輸入數據</div>
+                <div class="batch-help">
+                    <strong>使用說明：</strong><br>
+                    • 從 Excel 或 CSV 複製數據，直接貼上到下方文字框<br>
+                    • 格式：每行一筆數據，用 Tab、逗號或空格分隔<br>
+                    • 第一欄：壽命 (t)，第二欄：狀態 (F=失效, S=右設限)<br>
+                    • 範例：<code>100 F</code> 或 <code>200,S</code> 或 <code>300	F</code>
+                </div>
+                <textarea id="batchTextarea" class="batch-textarea"
+                    placeholder="請貼上數據，例如：&#10;100 F&#10;150 F&#10;200 S&#10;250 F"></textarea>
+                <div class="batch-buttons">
+                    <button class="btn-add" onclick="processBatchInput()">✓ 確認加入</button>
+                    <button class="btn-clear" onclick="closeBatchInput()">✗ 取消</button>
                 </div>
             </div>
         </div>
 
-        <footer class="footer">
-            <p>Wesley Chang © 2026 Mouldex Inc. | Multi-Group Weibull Analysis Professional Edition v4.5</p>
-        </footer>
-    </div>
+        <div id="theoryModal" class="batch-modal">
+            <div class="batch-modal-content" style="max-width: 900px;">
+                <div class="batch-modal-header">📘 Weibull 分析理論指南</div>
+                <div style="max-height: 70vh; overflow-y: auto;">
+                    <h2>1. 數據類型：失效與右設限</h2>
+                    <p>在可靠度測試中，我們會遇到兩種數據類型：</p>
 
-    <!-- Modals -->
-    <div id="batchModal" class="p-modal-overlay">
-        <div class="p-modal" style="max-width: 500px;">
-            <div class="p-modal-header">
-                <h3 id="batchTitle">批次數據匯入</h3>
-                <i class="fas fa-times" style="cursor:pointer" onclick="closeBatchInput()"></i>
-            </div>
-            <div class="p-modal-body">
-                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 12px;">格式：每行一個數據點 (壽命, 狀態)，例如：120, F</p>
-                <textarea id="batchTextarea" class="p-input" style="height: 200px; font-family: monospace;"
-                    placeholder="100, F&#10;150, F&#10;200, S"></textarea>
-                <div class="nav-actions" style="margin-top: 16px; justify-content: flex-end;">
-                    <button class="p-btn p-btn-outline" onclick="closeBatchInput()">取消</button>
-                    <button class="p-btn p-btn-indigo" onclick="processBatchInput()">確認匯入</button>
-                </div>
-            </div>
-        </div>
-    </div>
+                    <h3>失效數據 (Failure, F)</h3>
+                    <p>產品在測試期間<strong class="highlight-text">確實發生失效</strong>的數據點。例如：產品在運作 300 小時後損壞。這是最直接、最有價值的數據。
+                    </p>
 
-    <div id="theoryModal" class="p-modal-overlay">
-        <div class="p-modal">
-            <div class="p-modal-header">
-                <h3><i class="fas fa-graduation-cap"></i> Weibull 分析核心知識庫</h3>
-                <i class="fas fa-times" style="cursor:pointer" onclick="closeTheory()"></i>
-            </div>
-            <nav class="p-tabs" style="padding: 0 24px;">
-                <div class="p-tab active" onclick="switchTheoryTab('basics')">基礎概念</div>
-                <div class="p-tab" onclick="switchTheoryTab('params')">參數解讀</div>
-                <div class="p-tab" onclick="switchTheoryTab('blife')">B-Life 指標</div>
-                <div class="p-tab" onclick="switchTheoryTab('samples')">樣本建議</div>
-            </nav>
-            <div class="p-modal-body p-theory-content">
-                <div id="theory-basics" class="theory-section">
-                    <h2>1. Weibull 分佈基本原理</h2>
-                    <p>威布爾分佈 (Weibull Distribution) 是可靠度工程中最通用的機率模型。其核心優勢在於能通過形狀參數 (Beta) 的變化，模擬出產品生命週期中不同的失效特徵。</p>
+                    <h3>右設限數據 (Suspended/Censored, S)</h3>
+                    <p><strong>右設限</strong>是指產品在測試結束時<strong
+                            class="highlight-text">仍然正常運作</strong>，我們只知道它「至少」存活了這麼久，但不知道實際壽命。</p>
 
-                    <div class="highlight-box">
-                        <h3 style="margin-bottom: 12px; font-size: 1rem;">核心數學模型</h3>
-                        <p>可靠度函數 R(t) 表示在時間 t 仍然存活的機率：</p>
-                        <div class="formula-card" style="font-size: 1.8rem;">\( R(t) = e^{-(t/\eta)^\beta} \)</div>
-                        <p style="font-size: 0.85rem; color: var(--p-gray);">其中 $\beta$ 為形狀參數，$\eta$ 為尺度參數（特徵壽命）。</p>
+                    <div class="calculation-example" style="background-color: #fff3e0; border-color: #ffb74d;">
+                        <h3>為什麼會有右設限數據？</h3>
+                        <ul>
+                            <li><strong>測試時間限制：</strong>產品測試 500 小時後結束，但有些樣品還沒壞 → 記錄為「500 小時，設限 (S)」</li>
+                            <li><strong>樣品移除：</strong>測試中途因其他原因（非失效）移除樣品，例如送去做其他檢測</li>
+                            <li><strong>成本考量：</strong>長時間測試成本高，無法等到所有樣品都失效</li>
+                        </ul>
+                        <p><strong class="highlight-text">重要：</strong>右設限數據雖然沒有失效，但仍然提供了「產品至少能活這麼久」的資訊，對於提升分析準確度非常有幫助！
+                        </p>
                     </div>
 
-                    <h3>基礎數據類型</h3>
+                    <h3>實際範例</h3>
+                    <p>假設測試 5 個產品，測試時間上限 600 小時：</p>
                     <ul>
-                        <li><b style="color: var(--p-rose);">失效數據 (Complete/Failure Data):</b> 觀測到產品確切發失效的時間點。</li>
-                        <li><b style="color: var(--p-blue);">右設限數據 (Right Censored/Suspended):</b>
-                            測試結束時產品仍完好，僅知其壽命大於當前時間。</li>
+                        <li>產品 A：300 小時失效 → <strong>300, F</strong></li>
+                        <li>產品 B：450 小時失效 → <strong>450, F</strong></li>
+                        <li>產品 C：600 小時仍正常 → <strong>600, S</strong> (右設限)</li>
+                        <li>產品 D：550 小時失效 → <strong>550, F</strong></li>
+                        <li>產品 E：600 小時仍正常 → <strong>600, S</strong> (右設限)</li>
                     </ul>
-                </div>
+                    <p>這樣的數據組合可以進行 Weibull 分析，右設限數據會被正確納入計算。</p>
 
-                <div id="theory-params" class="theory-section" style="display:none;">
-                    <h2>2. 分佈參數深度解析</h2>
+                    <!-- 新增區塊：R(t) 與 F(t) 的關係 -->
+                    <h2>1.5 可靠度與不可靠度的關係</h2>
+                    <p>在工程實務中，產品的狀態是一體兩面的：不是「存活」就是「已失效」。因此我們定義了互補的兩個指標：</p>
 
-                    <div class="field" style="margin-bottom: 32px;">
-                        <h3 style="color: var(--p-indigo); margin-bottom: 12px;">形狀參數 Shape (Beta β)</h3>
-                        <p>Beta 決定了失效分佈的幾何趨勢，直接反應「失效機制」：</p>
-                        <table class="p-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 120px;">Beta 數值</th>
-                                    <th>失效機制 (Mechanism)</th>
-                                    <th>工程特徵</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><b>β < 1.0</b>
-                                    </td>
-                                    <td style="color:var(--p-rose)">早期失效 (Infant Mortality)</td>
-                                    <td>失效率隨時間下降。常與設計缺陷、製造髒污或材料瑕疵有關。</td>
-                                </tr>
-                                <tr>
-                                    <td><b>β = 1.0</b></td>
-                                    <td>隨機失效 (Random Chance)</td>
-                                    <td>失效率為常數。失效由隨機且不可預期的外部應力引起。</td>
-                                </tr>
-                                <tr>
-                                    <td><b style="color:var(--p-indigo)">1.0 < β < 4</b>
-                                    </td>
-                                    <td>磨耗失效 (Wear-out)</td>
-                                    <td>失效率隨時間增加。代表產品進入健康衰減期，如磨損、疲勞。</td>
-                                </tr>
-                                <tr>
-                                    <td><b>β > 4.0</b></td>
-                                    <td>快速劣化 (Rapid Aging)</td>
-                                    <td>失效極度集中。代表材料或結構在短時間內徹底崩溃。</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <ul>
+                        <li><strong>\(R(t)\) 可靠度 (Reliability)</strong>：
+                            <br>通俗名稱：<strong class="highlight-text">存活率 (Survival Rate)</strong>
+                            <br>定義：代表產品運作到時間 \(t\) <strong>仍未損壞</strong>的機率。
+                        </li>
+                        <li style="margin-top: 10px;"><strong>\(F(t)\) 不可靠度 (Unreliability)</strong>：
+                            <br>通俗名稱：<strong class="highlight-text">累積失效機率 (Cumulative Probability of
+                                Failure)</strong>
+                            <br>定義：代表產品從開始運作直到時間 \(t\) <strong>已經損壞</strong>的總比例（即 CDF）。
+                        </li>
+                    </ul>
+
+                    <div class="formula-box">
+                        $$ R(t) + F(t) = 1 $$
+                        <p style="font-size: 0.8em; color: #555; margin-top: 5px;">(存活率) + (累積失效機率) = 100%</p>
                     </div>
 
-                    <div class="field">
-                        <h3 style="color: var(--p-indigo); margin-bottom: 12px;">尺度參數 Scale (Eta η)</h3>
-                        <p>又稱「特徵壽命」。代表累積失效機率達到 <b>63.2%</b> 的時間點。它是衡量產品壽命長度的主指標。</p>
+                    <h2>2. 核心公式</h2>
+                    <p>Weibull 分佈的 <strong class="highlight-text">可靠度函數 (Reliability Function) \(R(t)\)</strong>
+                        公式如下：</p>
+
+                    <div class="formula-box">
+                        $$ R(t) = e^{-(t/\eta)^\beta} $$
                     </div>
-                </div>
 
-                <div id="theory-blife" class="theory-section" style="display:none;">
-                    <h2>3. B-Life 工程指標意義</h2>
-                    <p>B-Life 指標代表「失效百分比達到 x% 時的時間點」。</p>
+                    <ul>
+                        <li><strong>\(t\)</strong>：壽命（或行駛里程、循環次數）。</li>
+                        <li><strong>\(R(t)\)</strong>：在時間 \(t\) 時，產品尚未失效的機率（可靠度）。</li>
+                        <li><strong>\(\beta\) (Beta)</strong>：形狀參數 (Shape Parameter)，決定失效模式。</li>
+                        <li><strong>\(\eta\) (Eta)</strong>：尺度參數 (Scale Parameter)，又稱特徵壽命。</li>
+                    </ul>
 
-                    <table class="p-table" style="margin: 20px 0;">
+                    <h2>3. 理解關鍵參數</h2>
+                    <p>在代入公式前，必須先透過數據擬合求出 \(\beta\) 和 \(\eta\)。</p>
+
+                    <h3>\(\beta\) (形狀參數)：決定失效類型</h3>
+                    <ul>
+                        <li><strong>\(\beta < 1\)</strong>：早期失效期 (Infant Mortality)。產品剛出廠就壞，通常是生產瑕疵。</li>
+                        <li><strong>\(\beta = 1\)</strong>：隨機失效期 (Random Failures)。失效律是常數，類似指數分佈。</li>
+                        <li><strong>\(\beta > 1\)</strong>：磨耗失效期 (Wear-out)。產品老化、疲勞，失效律隨時間上升。</li>
+                    </ul>
+
+                    <h3>\(\eta\) (尺度參數)：特徵壽命</h3>
+                    <p>代表當 <strong>63.2%</strong> 的產品已經失效時的時間點（此時 \(R(t) = 36.8\%\)）。這是衡量產品壽命長短的主要指標。</p>
+
+                    <h3>\(R^2\) (擬合度)：數據可信度指標</h3>
+                    <p><strong>擬合度 (R-squared, R²)</strong> 是用來評估 Weibull 模型與實際數據的吻合程度，數值範圍為 0 到 1。</p>
+                    <ul>
+                        <li><strong>\(R^2 \geq 0.95\)</strong>：優秀擬合，數據非常符合 Weibull 分佈，分析結果高度可信。</li>
+                        <li><strong>\(0.90 \leq R^2 < 0.95\)</strong>：良好擬合，結果可接受，但可能存在少量異常數據。</li>
+                        <li><strong>\(0.80 \leq R^2 < 0.90\)</strong>：尚可擬合，建議檢查數據品質或考慮其他分佈模型。</li>
+                        <li><strong>\(R^2 < 0.80\)</strong>：擬合不佳，數據可能不符合 Weibull 分佈，或存在嚴重異常值。</li>
+                    </ul>
+                    <p><strong class="highlight-text">注意：</strong>如果 \(R^2\)
+                        過低，建議重新檢視數據來源、測試條件是否一致，或考慮使用對數常態分佈等其他模型。</p>
+
+                    <h2>4. 計算步驟實例</h2>
+                    <p>假設你分析一組數據後得到參數：<strong class="highlight-text">\(\beta = 2.5\)</strong> (磨耗型) 與 <strong
+                            class="highlight-text">\(\eta = 1000\) 小時</strong>。</p>
+
+                    <div class="calculation-example">
+                        <h3>情境 A：計算特定時間的可靠度</h3>
+                        <p><strong>問題：</strong>產品運作 <strong>500 小時</strong> 後，還存活的機率是多少？</p>
+                        <p>代入公式：</p>
+                        $$ R(500) = e^{-(500/1000)^{2.5}} $$
+                        $$ R(500) = e^{-(0.5)^{2.5}} = e^{-0.1768} \approx 0.838 $$
+                        <p><strong>答案：</strong> 可靠度為 <strong>83.8%</strong>。</p>
+                    </div>
+                    <br>
+                    <div class="calculation-example" style="background-color: #fff8e1; border-color: #ffe082;">
+                        <h3>情境 B：計算 B10 壽命 (B10 Life)</h3>
+                        <p><strong>問題：</strong>多少時間後，會有 10% 的產品失效（即 90% 可靠度）？</p>
+                        <p>公式變形： \( t = \eta \times (-\ln(R))^{1/\beta} \)</p>
+                        $$ t = 1000 \times (-\ln(0.9))^{1/2.5} $$
+                        $$ t = 1000 \times (0.10536)^{0.4} $$
+                        $$ t \approx 1000 \times 0.406 = 406 \text{ 小時} $$
+                        <p><strong>答案：</strong> B10 壽命為 <strong>406 小時</strong>。</p>
+                    </div>
+
+                    <h2>4. B-Life 概念與工程意義</h2>
+                    <p>在可靠度工程（特別是 Weibull 分析）中，「B」 代表 Basic Life（基本壽命），後面的數字代表 累積失效百分比。簡單來說，Bx 壽命就是：「當 x%
+                        的產品失效時，所經過的時間」。以下是 B1、B10、B63.2 的詳細定義與它們在工程上的意義：</p>
+
+                    <h3>1. B10 壽命 (B10 Life) —— 行業通用標準</h3>
+                    <div class="calculation-example" style="background-color: #e8f8f5; border-color: #2ecc71;">
+                        <p><strong>定義：</strong>當 10% 的產品失效（也就是還有 90% 存活）的時間點。</p>
+                        <p><strong>數學意義：</strong>可靠度 \(R(t) = 90\%\) 或 \(0.9\)。</p>
+                        <p><strong>應用場景：</strong>這是汽車業、軸承業、馬達業最常用的指標。通常用來設定 <strong>保固期 (Warranty)</strong>。</p>
+                        <p><strong>實際例子：</strong>如果車廠算出某零件的 B10 壽命是 3年，代表 3年內預計會有 10% 的車回來維修，這有助於計算保固成本。</p>
+                    </div>
+
+                    <h3>2. B1 壽命 (B1 Life) —— 高安全標準</h3>
+                    <div class="calculation-example" style="background-color: #f8f9fa; border-color: #495057;">
+                        <p><strong>定義：</strong>當 1% 的產品失效（也就是還有 99% 存活）的時間點。</p>
+                        <p><strong>數學意義：</strong>可靠度 \(R(t) = 99\%\) 或 \(0.99\)。</p>
+                        <p><strong>應用場景：</strong>用於高安全性、高可靠度的產品，如 <strong>航太、醫療設備、汽車安全氣囊</strong>。對於這些產品，10%
+                            的失效是不可接受的，必須確保極少量的產品會在該時間點前壞掉。</p>
+                    </div>
+
+                    <h3>3. B63.2 (特徵壽命 / \(\eta\)) —— 數學基準</h3>
+                    <div class="calculation-example" style="background-color: #fff3cd; border-color: #ffc107;">
+                        <p><strong>定義：</strong>當 63.2% 的產品失效（只剩 36.8% 存活）的時間點。</p>
+                        <p><strong>為什麼是 63.2%？</strong>這來自 Weibull 的公式結構。當時間 \(t\) 正好等於尺度參數 \(\eta\) 時：</p>
+                        <div class="formula-box">
+                            $$ R(\eta) = e^{-(\eta/\eta)^\beta} = e^{-1} \approx 0.3678 $$
+                            $$ F(t) = 1 - 0.3678 = 0.6322 \text{ (即 63.2%)} $$
+                        </div>
+                        <p><strong>意義：</strong>B63.2 就是 \(\eta\) (Eta, 尺度參數)。它代表這批產品的「特徵壽命」(Characteristic Life)。雖然
+                            63% 的失效率聽起來很高（大半都壞了），但它在數學上是一個非常穩定的基準点，用來衡量整體壽命的長短。如果 \(\eta\) 越大，代表產品整體撐得越久。</p>
+                    </div>
+
+                    <h3>總結比較表</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
                         <thead>
-                            <tr>
-                                <th>指標</th>
-                                <th>失效比例</th>
-                                <th>工程應用場景</th>
+                            <tr style="background-color: #34495e; color: white;">
+                                <th style="padding: 12px; border: 1px solid #ddd;">指標</th>
+                                <th style="padding: 12px; border: 1px solid #ddd;">失效比例</th>
+                                <th style="padding: 12px; border: 1px solid #ddd;">存活率 (可靠度)</th>
+                                <th style="padding: 12px; border: 1px solid #ddd;">意義與用途</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td><b>B1</b></td>
-                                <td>1% 失效</td>
-                                <td>航空航天、醫療植入裝置、汽車安全氣囊等極高安全性組件。</td>
+                            <tr style="background-color: #ffebee;">
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                                    <strong>B1</strong>
+                                </td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">1%</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">99%</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">極低風險：用於飛機、醫療、安全件。</td>
                             </tr>
-                            <tr>
-                                <td style="color: var(--p-indigo);"><b>B10</b></td>
-                                <td>10% 失效</td>
-                                <td><b>工業標準</b>。常用於軸承、電機與一般消費品保固期限設定。</td>
+                            <tr style="background-color: #e8f5e9;">
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                                    <strong>B10</strong>
+                                </td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">10%</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">90%</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">工業標準：用於制定保固期、馬達壽命、一般電子產品。</td>
                             </tr>
-                            <tr>
-                                <td><b>B50</b></td>
-                                <td>50% 失效</td>
-                                <td>中位數壽命。用於衡量整批產品的平均能量水平。</td>
+                            <tr style="background-color: #f3e5f5;">
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                                    <strong>B50</strong>
+                                </td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">50%</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">50%</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">中位數壽命：一半壞了一半好的時間點 (平均壽命)。</td>
+                            </tr>
+                            <tr style="background-color: #fff3e0;">
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                                    <strong>B63.2</strong>
+                                </td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">63.2%</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">36.8%</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">特徵壽命 (\(\eta\))：Weibull
+                                    的尺度參數，數學上的基準點。</td>
                             </tr>
                         </tbody>
                     </table>
 
-                    <div class="highlight-box">
-                        <h3>計算模型</h3>
-                        <div class="formula-card">\( t = \eta \cdot [-\ln(R)]^{1/\beta} \)</div>
-                    </div>
-                </div>
-
-                <div id="theory-samples" class="theory-section" style="display:none;">
-                    <h2>4. 樣本數量與信心度建議</h2>
-                    <p>樣本量直接決定了分析結果的精確度與統計信心水平：</p>
-
-                    <div class="p-metrics-grid" style="margin: 24px 0;">
-                        <div class="p-metric-box">
-                            <span>極低預測力</span>
-                            <strong>3-5 顆</strong>
-                            <p style="font-size: 0.75rem; color: var(--p-rose);">僅能觀察初步區間，Beta 值波動极大。</p>
+                    <h3>如何透過我們剛做的網頁計算？</h3>
+                    <div class="calculation-example" style="background-color: #e3f2fd; border-color: #2196f3;">
+                        <p>在我們的網頁工具算出 \(\beta\) 和 \(\eta\) 後，您可以手動用以下公式反推這些 B-Life：</p>
+                        <div class="formula-box">
+                            $$ t = \eta \times (-\ln(R))^{1/\beta} $$
                         </div>
-                        <div class="p-metric-box">
-                            <span>初步分析</span>
-                            <strong>6-10 顆</strong>
-                            <p style="font-size: 0.75rem; color: var(--p-gray);">行業內初步評估 B10 之低點數建議值。</p>
-                        </div>
-                        <div class="p-metric-box" style="border: 2px solid var(--p-indigo); background: #f5f7ff;">
-                            <span style="color: var(--p-indigo);">專業工程建議</span>
-                            <strong style="color: var(--p-indigo);">12-20 顆</strong>
-                            <p style="font-size: 0.75rem; color: var(--p-indigo); font-weight: 600;">取得穩定參數與窄信心區間的黃金區間。
-                            </p>
-                        </div>
+                        <ul>
+                            <li><strong>算 B1：</strong>將 R 設為 0.99</li>
+                            <li><strong>算 B10：</strong>將 R 設為 0.90</li>
+                            <li><strong>算 B63.2：</strong>答案就是網頁上顯示的 Eta (\(\eta\)) 值。</li>
+                        </ul>
                     </div>
 
-                    <h3 style="margin-bottom: 12px;">Python 自動化分析 (範例碼)</h3>
-                    <pre
-                        style="background: #f8fafc; border: 1px solid var(--p-border); padding: 16px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.4; color: #334155;">
-import numpy as np
-from scipy import stats
+                    <h2>5. 樣本數量建議：多少顆才夠？</h2>
+                    <p>進行可靠度分析（特別是 Weibull 分析）時，樣本數量的選擇永遠是<strong
+                            class="highlight-text">「統計精確度」與「測試成本/時間」之間的權衡</strong>。雖然數學上只需要 <strong>2
+                            個失效點</strong>就能畫出一條線（求出 \(\beta\) 和 \(\eta\)），但在工程實務上，這是遠遠不夠的。</p>
 
-# 工程觀測壽命數據 (失效點)
-lifetimes = [450, 580, 690, 780, 870, 950]
+                    <h3>建議的樣本數量 (Rule of Thumb)</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                        <thead>
+                            <tr style="background-color: #34495e; color: white;">
+                                <th style="padding: 12px; border: 1px solid #ddd;">樣本數量</th>
+                                <th style="padding: 12px; border: 1px solid #ddd;">評價</th>
+                                <th style="padding: 12px; border: 1px solid #ddd;">適用情境</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;"><strong>3 - 5
+                                        顆</strong></td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #e74c3c;">
+                                    <strong>極低 (高風險)</strong>
+                                </td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">
+                                    僅適用於非常昂貴的產品（如衛星、大型模具）或初步摸底測試。誤差範圍極大，僅能看大致趨勢。</td>
+                            </tr>
+                            <tr style="background-color: #f9f9f9;">
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;"><strong>6 -
+                                        10 顆</strong></td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #f39c12;">
+                                    <strong>勉強接受</strong>
+                                </td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">適用於開發階段的快速驗證。可以算出參數，但對於 B10
+                                    壽命（早期失效）的預測仍不夠準確。</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;"><strong>10 -
+                                        20 顆</strong></td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #27ae60;">
+                                    <strong>工程推薦 (甜蜜點)</strong>
+                                </td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">
+                                    大多數工業標準的選擇。在成本與精確度之間取得最佳平衡，足以判斷失效模式 (\(\beta\)) 並估算 B10 壽命。</td>
+                            </tr>
+                            <tr style="background-color: #f9f9f9;">
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;"><strong>20 -
+                                        30 顆+</strong></td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #2980b9;">
+                                    <strong>統計顯著</strong>
+                                </td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">
+                                    適用於高可靠度要求（如車規、醫療、航太）或低成本元件。能提供較窄的信賴區間。</td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-# Weibull 參數擬合
-# floc=0 代表位置參數為0 (兩參數 Weibull)
-shape, loc, scale = stats.weibull_min.fit(lifetimes, floc=0)
+                    <h3>為什麼？(背後的統計原因)</h3>
 
-print(f"Shape (Beta): {shape:.4f}")
-print(f"Scale (Eta): {scale:.2f}")
-                    </pre>
+                    <div class="calculation-example" style="background-color: #e8f5e9; border-color: #81c784;">
+                        <h3>A. 信賴區間 (Confidence Bounds) 的寬度</h3>
+                        <p>Weibull 分析算出的只是「估計值」。樣本越少，不確定性（信賴區間）就越寬。</p>
+                        <p><strong>例子：</strong></p>
+                        <ul>
+                            <li><strong>5 顆樣品：</strong>算出 B10 壽命是 500 小時，但 90% 信賴區間可能是 <strong>[100 小時, 2500
+                                    小時]</strong>。這範圍大到幾乎無法做決策。</li>
+                            <li><strong>20 顆樣品：</strong>算出 B10 壽命是 500 小時，信賴區間可能縮小至 <strong>[400 小時, 650
+                                    小時]</strong>。這數據就很有參考價值。</li>
+                        </ul>
+                    </div>
+
+                    <div class="calculation-example" style="background-color: #fff3e0; border-color: #ffb74d;">
+                        <h3>B. 為了抓到「早期失效」(B1/B10)</h3>
+                        <p>工程師通常不關心平均壽命 (\(\eta\), B63.2)，而是關心<strong class="highlight-text">「最早壞的那幾顆」</strong> (B10
+                            或 B1)。</p>
+                        <ul>
+                            <li>Weibull 分佈的<strong>尾端（早期失效區）</strong>對數據非常敏感。</li>
+                            <li>如果樣本太少，你很難確定最早失效的那顆是「隨機的特例」還是「整批產品的常態」。</li>
+                            <li>數據量大才能穩定描繪出曲線的尾端。</li>
+                        </ul>
+                    </div>
+
+                    <div class="calculation-example" style="background-color: #fce4ec; border-color: #f48fb1;">
+                        <h3>C. 確認失效模式 (\(\beta\) 值)</h3>
+                        <p>\(\beta\) 值決定了產品是「早夭」、「隨機失效」還是「磨耗」。</p>
+                        <p>樣本少時，隨便一顆異常值（Outlier）都會讓直線斜率劇烈波動，導致你誤判失效模式（例如把磨耗誤判為隨機失效），進而選錯改善方向。</p>
+                    </div>
+
+                    <h3>如果預算/時間有限，樣本很少怎麼辦？(Mouldex 實務建議)</h3>
+                    <p>在模具或高單價產品分析中，往往不可能測 20 顆。這時有幾種策略：</p>
+
+                    <div class="calculation-example" style="background-color: #e1f5fe; border-color: #4fc3f7;">
+                        <h3>策略一：使用「Weibayes 分析」(1參數 Weibull)</h3>
+                        <p>如果你只有很少的樣本（例如 2-3 顆），甚至沒有失效（全都是 Suspended），但你有過去類似產品的經驗。</p>
+                        <p><strong>方法：</strong>固定 \(\beta\) 值（根據歷史經驗，例如金屬疲勞通常 \(\beta \approx 3\)），只計算 \(\eta\)。</p>
+                        <p><strong>優點：</strong>需要的樣本數極少，且結果比標準 Weibull 更可信（因為利用了歷史知識）。</p>
+                    </div>
+
+                    <div class="calculation-example" style="background-color: #f3e5f5; border-color: #ba68c8;">
+                        <h3>策略二：增加「設限數據」(Suspended Data)</h3>
+                        <p><strong>方法：</strong>你可以只測到 2-3 顆失效，但同時放入 10 顆樣品一起跑。當前 3 顆失效後，停止測試。</p>
+                        <p><strong>原因：</strong>那 7 顆未失效的數據（右設限）雖然沒壞，但它們提供了「這段時間內沒壞」的資訊，這能顯著提升分析的準確度，比只測 3
+                            顆全部測到壞要好得多。</p>
+                    </div>
+
+                    <h3>總結建議</h3>
+                    <p>對於 <strong>Mouldex 的應用場景</strong>：</p>
+                    <ul>
+                        <li><strong>理想情況：</strong>盡量爭取 <strong class="highlight-text">10 顆以上</strong>的樣本。</li>
+                        <li><strong>最低底線：</strong>至少要有 <strong class="highlight-text">5-6 顆</strong>。</li>
+                        <li><strong>測試策略：</strong>如果只能測到少數幾顆壞掉，請務必保留那些「還沒壞」的數據作為<strong>右設限 (Suspended)</strong>
+                            輸入到我們剛做好的網頁工具中，這樣能大幅提升準確度。</li>
+                    </ul>
+
+                    <h2>6. 如何取得參數 (\(\beta, \eta\))</h2>
+                    <p>在實際工程中，我們不會手算參數，通常使用圖解法或軟體（如上方計算機）：</p>
+
+                    <h3>圖解法 (Excel 原理)</h3>
+                    <p>利用 Weibull 線性化公式製作散佈圖：</p>
+                    <div class="formula-box">
+                        $$ \ln(-\ln(1 - F(t))) = \beta \ln(t) - \beta \ln(\eta) $$
+                    </div>
+                    <p>在圖表中，趨勢線的<strong>斜率即為 \(\beta\)</strong>。</p>
+
+                    <h3>Python 程式範例</h3>
+                    <p>如果你熟悉程式，使用 Python 的 <code>lifelines</code> 套件是最快的方法：</p>
+                    <div class="code-block">
+                        <pre>from lifelines import WeibullFitter
+
+# 1. 輸入失效時間數據
+T = [100, 150, 200, 280, 400]
+
+# 2. 擬合數據
+wf = WeibullFitter()
+wf.fit(T)
+
+# 3. 輸出參數
+print(f"Beta (rho_): {wf.rho_}")
+print(f"Eta (lambda_): {wf.lambda_}")</pre>
+                    </div>
+
+                    <h2>7. 為什麼需要較多樣本？</h2>
+                    <div
+                        style="background:#e8f5e9; border:1px solid #81c784; border-radius:5px; padding:12px; margin:10px 0;">
+                        <h3 style="margin:0 0 8px 0;">A. 信賴區間的寬度</h3>
+                        <p>樣本越少，不確定性越高。5 顆樣品的 B10 信賴區間可能非常寬；20 顆則明顯收斂。</p>
+                    </div>
+                    <div
+                        style="background:#fff3e0; border:1px solid #ffb74d; border-radius:5px; padding:12px; margin:10px 0;">
+                        <h3 style="margin:0 0 8px 0;">B. 早期失效尾端的敏感度</h3>
+                        <p>B1/B10 屬於分佈尾端，對少量異常值極為敏感，需較多樣本穩定估計。</p>
+                    </div>
+                    <div
+                        style="background:#fce4ec; border:1px solid #f48fb1; border-radius:5px; padding:12px; margin:10px 0;">
+                        <h3 style="margin:0 0 8px 0;">C. 確認失效模式 (\(\beta\) 值)</h3>
+                        <p>樣本太少時，斜率容易受單點影響而誤判失效型態，導致錯誤改善方向。</p>
+                    </div>
+
+                    <h2>8. 實務策略</h2>
+                    <div
+                        style="background:#e1f5fe; border:1px solid #4fc3f7; border-radius:5px; padding:12px; margin:10px 0;">
+                        <h3 style="margin:0 0 8px 0;">策略一：Weibayes (1 參數 Weibull)</h3>
+                        <p>樣本極少或多為設限時，依歷史經驗固定 \(\beta\)，僅估 \(\eta\)。</p>
+                    </div>
+                    <div
+                        style="background:#f3e5f5; border:1px solid #ba68c8; border-radius:5px; padding:12px; margin:10px 0;">
+                        <h3 style="margin:0 0 8px 0;">策略二：增加設限數據</h3>
+                        <p>少量失效搭配更多設限樣本，可顯著提升擬合穩定度。</p>
+                    </div>
+
+                    <h2>9. 實務總結</h2>
+                    <ul>
+                        <li>至少蒐集 10 顆以上樣本，並保留設限數據</li>
+                        <li>同時檢視 \(\beta\)、\(\eta\)、\(R^2\) 三者以判讀失效型態與壽命</li>
+                        <li>以 B‑Life 指標溝通工程與商務（保固、壽命、改善幅度）</li>
+                    </ul>
+
+                    <h2>10. 差異分析的理論補充（雙組比較）</h2>
+                    <h3>\(\beta\) 差異的意義</h3>
+                    <ul>
+                        <li>\(\beta_B > \beta_A\)：B 組失效率隨時間上升更快，屬磨耗加劇，尾端失效更集中</li>
+                        <li>\(\beta_B \approx \beta_A\)：兩組失效型態相近，適合用 \(\eta\) 或 B‑Life 直接比較壽命</li>
+                        <li>\(\beta_B < \beta_A\)：B 組較傾向早期失效，需檢討製程／品質一致性</li>
+                    </ul>
+
+                    <h3>\(\eta\) 改善率的判讀</h3>
+                    <div
+                        style="text-align:center; padding:10px; background:#f8f9fa; border:1px solid #dee2e6; border-radius:5px; margin:10px 0;">
+                        $$ \text{\% 改善} = \left(\frac{\eta_B}{\eta_A} - 1\right) \times 100\% $$
+                    </div>
+                    <ul>
+                        <li>適用情境：\(|\beta_B - \beta_A| \le 0.2\)（失效型態近似）</li>
+                        <li>解讀：\(\eta_B/\eta_A = 1.30\) 表示壽命延長約 30%</li>
+                    </ul>
+
+                    <h3>當 \(\beta\) 不同時的比較方式</h3>
+                    <ul>
+                        <li>固定可靠度比較：選定 \(R\)（如 95%、90%），比較兩組的 \(t(R)\)</li>
+                    </ul>
+                    <div
+                        style="text-align:center; padding:10px; background:#fff3cd; border:1px solid #ffc107; border-radius:5px; margin:10px 0;">
+                        $$ t(R) = \eta \times \big(-\ln(R)\big)^{1/\beta} $$
+                    </div>
+                    <ul>
+                        <li>B‑Life 比較：以 \(B10\)、\(B50\) 或 \(B1\) 為指標，比較 \(t_{B,\,x} / t_{A,\,x}\)</li>
+                        <li>優點：避免僅以 \(\eta\) 判斷而忽略 \(\beta\) 對尾端的影響</li>
+                    </ul>
+
+                    <h3>判讀範例（文字化）</h3>
+                    <div
+                        style="background:#e8f6f3; border:1px solid #a2d9ce; border-radius:5px; padding:12px; margin:10px 0;">
+                        <p>例一（型態相近）：\(\beta_A = 1.2,\ \eta_A = 500;\ \beta_B = 1.2,\ \eta_B = 650\)。則 \(\eta\) 改善 ≈
+                            30%，B10 比較亦約 30% 提升。</p>
+                        <p>例二（型態不同）：\(\beta_A = 1.0,\ \eta_A = 520;\ \beta_B = 1.6,\ \eta_B = 650\)。以 \(R=90\%\)
+                            比較：計算 \(t_A(0.9)\) 與 \(t_B(0.9)\)；若 \(t_B/t_A > 1\)，表示在該可靠度下 B 組更耐久。</p>
+                    </div>
+
+                    <h3>判讀優先順序</h3>
+                    <table style="width:100%; border-collapse:collapse; margin:12px 0;">
+                        <thead>
+                            <tr style="background:#34495e; color:#fff;">
+                                <th style="padding:8px; border:1px solid #ddd;">步驟</th>
+                                <th style="padding:8px; border:1px solid #ddd;">重點</th>
+                                <th style="padding:8px; border:1px solid #ddd;">說明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">1</td>
+                                <td style="padding:8px; border:1px solid #ddd;">檢查 \(R^2\)</td>
+                                <td style="padding:8px; border:1px solid #ddd;">擬合度不足時避免深入比較</td>
+                            </tr>
+                            <tr style="background:#f9f9f9;">
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">2</td>
+                                <td style="padding:8px; border:1px solid #ddd;">比較 \(\beta\)</td>
+                                <td style="padding:8px; border:1px solid #ddd;">型態相近者可直接用 \(\eta\)/B‑Life；型態不同用
+                                    \(t(R)\)</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">3</td>
+                                <td style="padding:8px; border:1px solid #ddd;">選擇比較指標</td>
+                                <td style="padding:8px; border:1px solid #ddd;">相近：\(\eta\) 改善率；不同：固定 \(R\) 或 B‑Life
+                                </td>
+                            </tr>
+                            <tr style="background:#f9f9f9;">
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">4</td>
+                                <td style="padding:8px; border:1px solid #ddd;">形成結論</td>
+                                <td style="padding:8px; border:1px solid #ddd;">用明確百分比或時間比值呈現差異</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-            <div class="p-modal-header"
-                style="justify-content: flex-end; border-top: 1px solid var(--p-border); border-bottom: none;">
-                <button class="p-btn p-btn-indigo" onclick="closeTheory()">完成學習並關閉</button>
+                <div class="batch-buttons" style="grid-template-columns: 1fr;">
+                    <button class="btn-clear" onclick="closeTheory()">關閉</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Scripting -->
-    <script src="app.js"></script>
+        <script>
+            let dataGroupA = [];
+            let dataGroupB = [];
+            let analysisResults = null;
+            let markerReliabilityPercent = 95;
+            let chartProb = null;
+            let chartRel = null;
+
+            window.onload = function () {
+                const tInputA = document.getElementById("tInputA");
+                const sInputA = document.getElementById("sInputA");
+                const markerRInput = document.getElementById('markerRInput');
+
+                // Initialize Mode
+                setAnalysisMode('dual'); // Default to dual
+
+                // Force button text to be correct (safeguard)
+                const btn = document.getElementById('btnRunAnalysis');
+                if (btn) btn.innerHTML = '🔍 開始分析';
+
+                tInputA.addEventListener("keydown", function (event) {
+                    if (event.key === "Enter") { event.preventDefault(); addData('A'); }
+                });
+                sInputA.addEventListener("keydown", function (event) {
+                    if (event.key === "Enter") { event.preventDefault(); addData('A'); }
+                });
+
+                const tInputB = document.getElementById("tInputB");
+                const sInputB = document.getElementById("sInputB");
+                tInputB.addEventListener("keydown", function (event) {
+                    if (event.key === "Enter") { event.preventDefault(); addData('B'); }
+                });
+                sInputB.addEventListener("keydown", function (event) {
+                    if (event.key === "Enter") { event.preventDefault(); addData('B'); }
+                });
+
+                function updateMarkerR() {
+                    let val = parseFloat(markerRInput.value);
+                    if (isNaN(val)) val = 95;
+                    if (val < 0) val = 0;
+                    if (val > 99.9) val = 99.9;
+                    markerReliabilityPercent = val;
+                    if (analysisResults) {
+                        drawCharts(analysisResults.groupA, analysisResults.groupB);
+                    }
+                }
+                markerRInput.addEventListener('change', updateMarkerR);
+                markerRInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); updateMarkerR(); } });
+
+                tInputA.focus();
+            };
+
+            let currentBatchGroup = 'A'; // 記錄當前批次輸入的組別
+
+            function setAnalysisMode(mode) {
+                const container = document.querySelector('.container');
+                const runBtn = document.querySelector('.btn-calc'); // Get Run button
+
+                if (mode === 'single') {
+                    container.classList.add('mode-single');
+                    container.classList.remove('mode-dual');
+                    runBtn.innerHTML = '🔍 開始分析';
+                } else {
+                    container.classList.remove('mode-single');
+                    container.classList.add('mode-dual');
+                    runBtn.innerHTML = '🔍 開始比對';
+                }
+
+                // Trigger analysis re-run if we have data, to refresh results visibility
+                if (dataGroupA.length > 0) {
+                    // Optional: automatically re-run or clear B results visually
+                    // For now, let's just ensure the UI state is correct
+                    if (mode === 'single') {
+                        document.querySelector('.group-result.group-b').style.display = 'none';
+                        document.querySelector('.diff-panel').style.display = 'none';
+                    }
+                }
+            }
+
+            function addData(group) {
+                const tInput = document.getElementById('tInput' + group);
+                const t = parseFloat(tInput.value);
+                const s = document.getElementById('sInput' + group).value;
+                if (isNaN(t) || t <= 0) {
+                    if (tInput.value !== "") alert("請輸入大於 0 的有效時間");
+                    return;
+                }
+
+                if (group === 'A') {
+                    dataGroupA.push({ t: t, s: s });
+                    sortDataArray(dataGroupA);
+                    updateTable('A');
+                } else {
+                    dataGroupB.push({ t: t, s: s });
+                    sortDataArray(dataGroupB);
+                    updateTable('B');
+                }
+
+                tInput.value = '';
+                tInput.focus();
+            }
+
+            function showBatchInput(group) {
+                currentBatchGroup = group;
+                const groupName = document.getElementById('groupName' + group).value;
+                document.getElementById('batchModalTitle').textContent = `📋 批次輸入數據 - ${groupName}`;
+                document.getElementById('batchModal').style.display = 'block';
+                document.getElementById('batchTextarea').value = '';
+                document.getElementById('batchTextarea').focus();
+            }
+
+            function closeBatchInput() {
+                document.getElementById('batchModal').style.display = 'none';
+            }
+
+            function openTheory() {
+                document.getElementById('theoryModal').style.display = 'block';
+            }
+
+            function closeTheory() {
+                document.getElementById('theoryModal').style.display = 'none';
+            }
+
+            function processBatchInput() {
+                const textarea = document.getElementById('batchTextarea');
+                const text = textarea.value.trim();
+
+                if (!text) {
+                    alert("請輸入數據！");
+                    return;
+                }
+
+                const lines = text.split('\n');
+                let successCount = 0;
+                let errorCount = 0;
+                const errors = [];
+
+                lines.forEach((line, index) => {
+                    line = line.trim();
+                    if (!line) return;
+
+                    const parts = line.split(/[\t,\s]+/);
+
+                    if (parts.length < 2) {
+                        errors.push(`第 ${index + 1} 行：格式錯誤（需要兩欄數據）`);
+                        errorCount++;
+                        return;
+                    }
+
+                    const t = parseFloat(parts[0]);
+                    let s = parts[1].toUpperCase();
+
+                    if (isNaN(t) || t <= 0) {
+                        errors.push(`第 ${index + 1} 行：壽命必須是大於 0 的數字`);
+                        errorCount++;
+                        return;
+                    }
+
+                    if (s !== 'F' && s !== 'S') {
+                        errors.push(`第 ${index + 1} 行：狀態必須是 F 或 S`);
+                        errorCount++;
+                        return;
+                    }
+
+                    if (currentBatchGroup === 'A') {
+                        dataGroupA.push({ t: t, s: s });
+                    } else {
+                        dataGroupB.push({ t: t, s: s });
+                    }
+                    successCount++;
+                });
+
+                if (successCount > 0) {
+                    if (currentBatchGroup === 'A') {
+                        sortDataArray(dataGroupA);
+                        updateTable('A');
+                    } else {
+                        sortDataArray(dataGroupB);
+                        updateTable('B');
+                    }
+                }
+
+                closeBatchInput();
+
+                if (errorCount > 0) {
+                    alert(`✅ 成功加入 ${successCount} 筆數據\n❌ ${errorCount} 筆數據有誤：\n\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? '\n...(更多錯誤)' : ''}`);
+                } else {
+                    alert(`✅ 成功加入 ${successCount} 筆數據！`);
+                }
+            }
+
+            window.onclick = function (event) {
+                const modal = document.getElementById('batchModal');
+                const theory = document.getElementById('theoryModal');
+                if (event.target === modal) { closeBatchInput(); }
+                if (event.target === theory) { closeTheory(); }
+            }
+
+            function loadDemo(group) {
+                if (group === 'A') {
+                    dataGroupA = [
+                        { t: 300, s: 'F' }, { t: 100, s: 'F' }, { t: 250, s: 'S' },
+                        { t: 150, s: 'F' }, { t: 550, s: 'F' }, { t: 120, s: 'S' },
+                        { t: 400, s: 'F' }, { t: 200, s: 'F' }
+                    ];
+                    sortDataArray(dataGroupA);
+                    updateTable('A');
+                } else {
+                    dataGroupB = [
+                        { t: 450, s: 'F' }, { t: 200, s: 'F' }, { t: 350, s: 'S' },
+                        { t: 250, s: 'F' }, { t: 700, s: 'F' }, { t: 180, s: 'S' },
+                        { t: 500, s: 'F' }, { t: 300, s: 'F' }
+                    ];
+                    sortDataArray(dataGroupB);
+                    updateTable('B');
+                }
+            }
+
+            function sortDataArray(data) {
+                data.sort((a, b) => {
+                    if (a.t !== b.t) return a.t - b.t;
+                    return (a.s === 'F' ? -1 : 1);
+                });
+            }
+
+            function clearData(group) {
+                if (group === 'A') {
+                    dataGroupA = [];
+                    updateTable('A');
+                } else {
+                    dataGroupB = [];
+                    updateTable('B');
+                }
+            }
+
+            function clearAllData() {
+                if (!confirm('確定要清空兩組的所有數據和圖表嗎？')) {
+                    return;
+                }
+
+                // 清空兩組數據
+                dataGroupA = [];
+                dataGroupB = [];
+                analysisResults = null;
+
+                // 更新表格
+                updateTable('A');
+                updateTable('B');
+
+                // 清除圖表
+                Plotly.purge('chartProb');
+                Plotly.purge('chartRel');
+
+                // 隱藏結果面板
+                document.getElementById('groupResultA').style.display = 'none';
+                document.getElementById('groupResultB').style.display = 'none';
+                document.getElementById('diffPanel').style.display = 'none';
+
+                alert('✅ 已清空所有數據和圖表！');
+            }
+
+            function deleteRow(group, idx) {
+                if (group === 'A') {
+                    dataGroupA.splice(idx, 1);
+                    updateTable('A');
+                } else {
+                    dataGroupB.splice(idx, 1);
+                    updateTable('B');
+                }
+            }
+
+            function updateTable(group) {
+                const data = (group === 'A') ? dataGroupA : dataGroupB;
+                const tbody = document.querySelector('#dataTable' + group + ' tbody');
+                tbody.innerHTML = '';
+                data.forEach((item, idx) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                <td style="color:#aaa;">${idx + 1}</td>
+                <td style="font-weight:bold;">${item.t}</td>
+                <td style="color:${item.s === 'F' ? '#e74c3c' : '#2980b9'}; font-weight:bold;">
+                    ${item.s === 'F' ? '失效 (F)' : '設限 (S)'}
+                </td>
+                <td><button class="btn-del" onclick="deleteRow('${group}', ${idx})">X</button></td>
+            `;
+                    tbody.appendChild(tr);
+                });
+                const container = tbody.closest('.table-container');
+                container.scrollTop = container.scrollHeight;
+            }
+
+            function runAnalysis() {
+                const failuresA = dataGroupA.filter(d => d.s === 'F').length;
+                const failuresB = dataGroupB.filter(d => d.s === 'F').length;
+                const mode = document.querySelector('input[name="analysisMode"]:checked').value;
+
+                // Mode-aware validation
+                if (mode === 'single') {
+                    if (failuresA < 2) {
+                        alert("錯誤：單組模式下，組別 A 至少需要 2 筆失效數據 (Failure) 才能進行分析。");
+                        return;
+                    }
+                } else {
+                    // Dual mode validation
+                    if (failuresA < 2 && failuresB < 2) {
+                        alert("錯誤：至少需要一組有 2 個以上的失效數據 (Failure) 才能計算參數。");
+                        return;
+                    }
+                }
+
+                // Start Analysis
+
+                let resultsA = null;
+                if (failuresA >= 2) {
+                    resultsA = performWeibullAnalysis(dataGroupA);
+                    displayGroupResults('A', resultsA);
+                }
+
+                let resultsB = null;
+                if (mode === 'dual' && failuresB >= 2) {
+                    resultsB = performWeibullAnalysis(dataGroupB);
+                    displayGroupResults('B', resultsB);
+                } else {
+                    document.querySelector('.group-result.group-b').style.display = 'none';
+                }
+
+                adjustUILayout(resultsA, resultsB);
+
+                if (resultsA && resultsB && mode === 'dual') {
+                    displayDifferenceAnalysis(resultsA, resultsB);
+                    document.querySelector('.diff-panel').style.display = 'block';
+                } else {
+                    document.querySelector('.diff-panel').style.display = 'none';
+                }
+
+                analysisResults = {
+                    groupA: resultsA,
+                    groupB: resultsB,
+                    mode: (resultsA && resultsB && mode === 'dual') ? 'dual' : 'single'
+                };
+
+                document.getElementById('resultPanel').style.display = 'block';
+                drawCharts(resultsA, resultsB);
+            }
+
+            function adjustUILayout(resultsA, resultsB) {
+                const comparisonGrid = document.querySelector('.comparison-grid');
+                const groupResultA = comparisonGrid.querySelector('.group-result.group-a');
+                const groupResultB = comparisonGrid.querySelector('.group-result.group-b');
+                const resultTitle = document.getElementById('resultTitle');
+
+                if (resultsA && resultsB) {
+                    comparisonGrid.style.gridTemplateColumns = '1fr 1fr';
+                    groupResultA.style.display = 'block';
+                    groupResultB.style.display = 'block';
+                    resultTitle.innerText = '雙組比對結果';
+                    document.getElementById('groupANameBadge').innerText = document.getElementById('groupNameA').value;
+                    document.getElementById('groupBNameBadge').innerText = document.getElementById('groupNameB').value;
+                } else if (resultsA) {
+                    comparisonGrid.style.gridTemplateColumns = '1fr';
+                    groupResultA.style.display = 'block';
+                    groupResultB.style.display = 'none';
+                    resultTitle.innerText = '單組分析結果';
+                    document.getElementById('groupANameBadge').innerText = document.getElementById('groupNameA').value;
+                } else if (resultsB) {
+                    comparisonGrid.style.gridTemplateColumns = '1fr';
+                    groupResultA.style.display = 'none';
+                    groupResultB.style.display = 'block';
+                    resultTitle.innerText = '分析結果 - ' + document.getElementById('groupNameB').value;
+                }
+            }
+
+            function performWeibullAnalysis(data) {
+                sortDataArray(data);
+                const N = data.length;
+                let points = [];
+                let previousOrderNumber = 0;
+
+                for (let i = 0; i < N; i++) {
+                    let item = data[i];
+                    let reverseRank = N - i;
+                    let increment = ((N + 1) - previousOrderNumber) / reverseRank;
+                    let newOrderNumber = previousOrderNumber + increment;
+                    if (item.s === 'F') {
+                        let medianRank = (newOrderNumber - 0.3) / (N + 0.4);
+                        if (medianRank >= 0.99999) medianRank = 0.99999;
+                        let x = Math.log(item.t);
+                        let term = -Math.log(1 - medianRank);
+                        let y = Math.log(term);
+                        if (isFinite(x) && isFinite(y)) {
+                            points.push({ x: x, y: y, t: item.t });
+                        }
+                    }
+                    previousOrderNumber = newOrderNumber;
+                }
+
+                if (points.length < 2) {
+                    return null;
+                }
+
+                let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+                let nP = points.length;
+                points.forEach(p => {
+                    sumX += p.x; sumY += p.y;
+                    sumXY += (p.x * p.y); sumXX += (p.x * p.x);
+                });
+                let slope = (nP * sumXY - sumX * sumY) / (nP * sumXX - sumX * sumX);
+                let intercept = (sumY - slope * sumX) / nP;
+                let beta = slope;
+                let eta = Math.exp(-intercept / beta);
+                let yMean = sumY / nP;
+                let ssTot = points.reduce((acc, p) => acc + Math.pow(p.y - yMean, 2), 0);
+                let ssRes = points.reduce((acc, p) => acc + Math.pow(p.y - (slope * p.x + intercept), 2), 0);
+                let r2 = 1 - (ssRes / ssTot);
+
+                let typeText = "";
+                if (beta < 1) typeText = "早期失效 (Infant Mortality)";
+                else if (beta < 1.1) typeText = "隨機失效 (Constant Failure Rate)";
+                else typeText = "磨耗失效 (Wear-out)";
+
+                return {
+                    beta: beta,
+                    eta: eta,
+                    r2: r2,
+                    failureMode: typeText,
+                    points: points,
+                    slope: slope,
+                    intercept: intercept,
+                    maxT: data[N - 1].t
+                };
+            }
+
+            function displayGroupResults(group, results) {
+                if (!results) return;
+
+                // Note: Group Name is now handled in adjustUILayout via groupANameBadge/groupBNameBadge
+                document.getElementById('valBeta' + group).innerText = results.beta.toFixed(4);
+                document.getElementById('valEta' + group).innerText = results.eta.toFixed(2);
+                document.getElementById('valR2' + group).innerText = results.r2.toFixed(4);
+                document.getElementById('descText' + group).innerText = `失效模式: ${results.failureMode}`;
+            }
+
+            function displayDifferenceAnalysis(resultsA, resultsB) {
+                const betaDiffPct = ((resultsB.beta - resultsA.beta) / resultsA.beta * 100);
+                const etaDiffPct = ((resultsB.eta - resultsA.eta) / resultsA.eta * 100);
+
+                document.getElementById('diffBeta').innerText = (betaDiffPct >= 0 ? '+' : '') + betaDiffPct.toFixed(2) + '%';
+                document.getElementById('diffEta').innerText = (etaDiffPct >= 0 ? '+' : '') + etaDiffPct.toFixed(2) + '%';
+                document.getElementById('diffImprovement').innerText = (etaDiffPct >= 0 ? '+' : '') + etaDiffPct.toFixed(2) + '%';
+
+                const betaA = resultsA.beta;
+                const betaB = resultsB.beta;
+                const etaA = resultsA.eta;
+                const etaB = resultsB.eta;
+                const r2A = resultsA.r2;
+                const r2B = resultsB.r2;
+                const absBetaDelta = Math.abs(betaB - betaA);
+
+                const parts = [];
+                if (r2A < 0.80 || r2B < 0.80) {
+                    parts.push('⚠️ 擬合度偏低 (R²<0.80)，結果僅供參考');
+                }
+
+                if (absBetaDelta <= 0.2) {
+                    parts.push('型態相近：β 差異小 (|Δβ|≤0.2)，以 η 改善率判讀');
+                    parts.push(`η 改善 ≈ ${(etaDiffPct).toFixed(2)}%`);
+                    const R90 = 0.90;
+                    const tA90 = etaA * Math.pow(-Math.log(R90), 1 / betaA);
+                    const tB90 = etaB * Math.pow(-Math.log(R90), 1 / betaB);
+                    const tImprovement90 = ((tB90 - tA90) / tA90) * 100;
+                    parts.push(`R=90% 時：A=${tA90.toFixed(2)}，B=${tB90.toFixed(2)}，差異 ≈ ${(tImprovement90 >= 0 ? '+' : '') + tImprovement90.toFixed(2)}%`);
+                    const R95 = 0.95;
+                    const tA95 = etaA * Math.pow(-Math.log(R95), 1 / betaA);
+                    const tB95 = etaB * Math.pow(-Math.log(R95), 1 / betaB);
+                    const tImprovement95 = ((tB95 - tA95) / tA95) * 100;
+                    parts.push(`R=95% 時：A=${tA95.toFixed(2)}，B=${tB95.toFixed(2)}，差異 ≈ ${(tImprovement95 >= 0 ? '+' : '') + tImprovement95.toFixed(2)}%`);
+                    const Rb10 = 0.90; // B10 即 R=90%
+                    const tAB10 = tA90;
+                    const tBB10 = tB90;
+                    const b10Improvement = tImprovement90;
+                    parts.push(`B10 壽命：A=${tAB10.toFixed(2)}，B=${tBB10.toFixed(2)} (${(b10Improvement >= 0 ? '+' : '') + b10Improvement.toFixed(2)}%)`);
+                } else {
+                    parts.push('型態不同：β 差異明顯，建議以固定可靠度或 B‑Life 比較');
+                    const R90 = 0.90;
+                    const tA90 = etaA * Math.pow(-Math.log(R90), 1 / betaA);
+                    const tB90 = etaB * Math.pow(-Math.log(R90), 1 / betaB);
+                    const tImprovement90 = ((tB90 - tA90) / tA90) * 100;
+                    parts.push(`R=90% 時：A=${tA90.toFixed(2)}，B=${tB90.toFixed(2)}，差異 ≈ ${(tImprovement90 >= 0 ? '+' : '') + tImprovement90.toFixed(2)}%`);
+                    const R95 = 0.95;
+                    const tA95 = etaA * Math.pow(-Math.log(R95), 1 / betaA);
+                    const tB95 = etaB * Math.pow(-Math.log(R95), 1 / betaB);
+                    const tImprovement95 = ((tB95 - tA95) / tA95) * 100;
+                    parts.push(`R=95% 時：A=${tA95.toFixed(2)}，B=${tB95.toFixed(2)}，差異 ≈ ${(tImprovement95 >= 0 ? '+' : '') + tImprovement95.toFixed(2)}%`);
+                    const R50 = 0.50;
+                    const tA50 = etaA * Math.pow(-Math.log(R50), 1 / betaA);
+                    const tB50 = etaB * Math.pow(-Math.log(R50), 1 / betaB);
+                    const tImprovement50 = ((tB50 - tA50) / tA50) * 100;
+                    parts.push(`B50 中位壽命：A=${tA50.toFixed(2)}，B=${tB50.toFixed(2)} (${(tImprovement50 >= 0 ? '+' : '') + tImprovement50.toFixed(2)}%)`);
+                    const b10Improvement = tImprovement90;
+                    parts.push(`B10 壽命：A=${tA90.toFixed(2)}，B=${tB90.toFixed(2)} (${(b10Improvement >= 0 ? '+' : '') + b10Improvement.toFixed(2)}%)`);
+                }
+
+                if (betaB > betaA) {
+                    parts.push('β_B > β_A：B 組磨耗趨勢較強');
+                } else if (betaB < betaA) {
+                    parts.push('β_B < β_A：B 組較傾向早期失效');
+                }
+
+                document.getElementById('diffInterpretation').innerText = parts.join('；');
+            }
+
+            function exportData() {
+                if (!analysisResults || (!analysisResults.groupA && !analysisResults.groupB)) {
+                    alert("請先執行分析以產生結果!");
+                    return;
+                }
+
+                const groupNameA = document.getElementById('groupNameA').value;
+                const groupNameB = document.getElementById('groupNameB').value;
+                const mode = analysisResults.mode;
+
+                let csvContent = `Weibull 可靠度分析結果 - ${mode === 'dual' ? '雙組比對' : '單組分析'}\n\n`;
+
+                if (analysisResults.groupA) {
+                    csvContent += `=== ${groupNameA} 分析參數 ===\n`;
+                    csvContent += "參數名稱,數值\n";
+                    csvContent += `形狀參數 Beta (β),${analysisResults.groupA.beta.toFixed(4)}\n`;
+                    csvContent += `特徵壽命 Eta (η),${analysisResults.groupA.eta.toFixed(2)}\n`;
+                    csvContent += `擬合度 R²,${analysisResults.groupA.r2.toFixed(4)}\n`;
+                    csvContent += `失效模式,${analysisResults.groupA.failureMode}\n\n`;
+                }
+
+                if (analysisResults.groupB) {
+                    csvContent += `=== ${groupNameB} 分析參數 ===\n`;
+                    csvContent += "參數名稱,數值\n";
+                    csvContent += `形狀參數 Beta (β),${analysisResults.groupB.beta.toFixed(4)}\n`;
+                    csvContent += `特徵壽命 Eta (η),${analysisResults.groupB.eta.toFixed(2)}\n`;
+                    csvContent += `擬合度 R²,${analysisResults.groupB.r2.toFixed(4)}\n`;
+                    csvContent += `失效模式,${analysisResults.groupB.failureMode}\n\n`;
+                }
+
+                if (analysisResults.groupA && analysisResults.groupB) {
+                    const betaDiff = ((analysisResults.groupB.beta - analysisResults.groupA.beta) / analysisResults.groupA.beta * 100);
+                    const etaDiff = ((analysisResults.groupB.eta - analysisResults.groupA.eta) / analysisResults.groupA.eta * 100);
+                    csvContent += "=== 差異分析 (B vs A) ===\n";
+                    csvContent += "項目,差異百分比\n";
+                    csvContent += `Beta 差異,${betaDiff.toFixed(2)}%\n`;
+                    csvContent += `Eta 差異,${etaDiff.toFixed(2)}%\n`;
+                    csvContent += `壽命改善率,${etaDiff.toFixed(2)}%\n\n`;
+                }
+
+                if (dataGroupA.length > 0) {
+                    csvContent += `=== ${groupNameA} 原始數據 ===\n`;
+                    csvContent += "序號,壽命 (t),狀態(F:失效/S:右設限) \n";
+                    dataGroupA.forEach((item, idx) => {
+                        csvContent += `${idx + 1},${item.t},${item.s}\n`;
+                    });
+                    csvContent += "\n";
+                }
+
+                if (dataGroupB.length > 0) {
+                    csvContent += `=== ${groupNameB} 原始數據 ===\n`;
+                    csvContent += "序號,壽命 (t),狀態(F:失效/S:右設限) \n";
+                    dataGroupB.forEach((item, idx) => {
+                        csvContent += `${idx + 1},${item.t},${item.s}\n`;
+                    });
+                    csvContent += "\n";
+                }
+
+                // 添加詳細的可靠度曲線數據
+                if (analysisResults.groupA) {
+                    const maxT = Math.max(...dataGroupA.map(d => d.t)) * 1.5;
+                    csvContent += `=== ${groupNameA} 可靠度曲線數據 (200點) ===\n`;
+                    csvContent += "壽命 (t),可靠度 R(t) (%),失效率 F(t) (%)\n";
+                    for (let i = 0; i <= 200; i++) {
+                        const t = maxT * i / 200;
+                        const R = Math.exp(-Math.pow(t / analysisResults.groupA.eta, analysisResults.groupA.beta)) * 100;
+                        const F = 100 - R;
+                        csvContent += `${t.toFixed(2)},${R.toFixed(4)},${F.toFixed(4)}\n`;
+                    }
+                    csvContent += "\n";
+
+                    // B-Life 數據
+                    csvContent += `=== ${groupNameA} B-Life 數據 ===\n`;
+                    csvContent += "B-Life,時間 (t),說明\n";
+                    const bLifeValues = [1, 5, 10, 20, 50];
+                    bLifeValues.forEach(b => {
+                        const R = (100 - b) / 100;
+                        const t = analysisResults.groupA.eta * Math.pow(-Math.log(R), 1 / analysisResults.groupA.beta);
+                        csvContent += `B${b},${t.toFixed(2)},${b}% 產品失效時的壽命\n`;
+                    });
+                    csvContent += "\n";
+                }
+
+                if (analysisResults.groupB) {
+                    const maxT = Math.max(...dataGroupB.map(d => d.t)) * 1.5;
+                    csvContent += `=== ${groupNameB} 可靠度曲線數據 (200點) ===\n`;
+                    csvContent += "壽命 (t),可靠度 R(t) (%),失效率 F(t) (%)\n";
+                    for (let i = 0; i <= 200; i++) {
+                        const t = maxT * i / 200;
+                        const R = Math.exp(-Math.pow(t / analysisResults.groupB.eta, analysisResults.groupB.beta)) * 100;
+                        const F = 100 - R;
+                        csvContent += `${t.toFixed(2)},${R.toFixed(4)},${F.toFixed(4)}\n`;
+                    }
+                    csvContent += "\n";
+
+                    // B-Life 數據
+                    csvContent += `=== ${groupNameB} B-Life 數據 ===\n`;
+                    csvContent += "B-Life,時間 (t),說明\n";
+                    const bLifeValues = [1, 5, 10, 20, 50];
+                    bLifeValues.forEach(b => {
+                        const R = (100 - b) / 100;
+                        const t = analysisResults.groupB.eta * Math.pow(-Math.log(R), 1 / analysisResults.groupB.beta);
+                        csvContent += `B${b},${t.toFixed(2)},${b}% 產品失效時的壽命\n`;
+                    });
+                    csvContent += "\n";
+                }
+
+                const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", `Weibull_分析_${mode === 'dual' ? '雙組比對' : '單組'}_${new Date().toISOString().slice(0, 10)}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                alert("✅ 完整數據已成功匯出為 CSV 檔案!");
+            }
+
+
+
+            function applyStyleScale(chartData, chartOptions, scale, preferThin) {
+                if (!chartOptions.plugins) chartOptions.plugins = {};
+                if (!chartOptions.plugins.legend) chartOptions.plugins.legend = {};
+                if (!chartOptions.plugins.legend.labels) chartOptions.plugins.legend.labels = {};
+                const legendFontSize = ((chartOptions.plugins.legend.labels.font && chartOptions.plugins.legend.labels.font.size) || 12);
+                chartOptions.plugins.legend.labels.font = { size: Math.round(legendFontSize * scale) };
+                if (chartOptions.plugins.title) {
+                    const titleFontSize = ((chartOptions.plugins.title.font && chartOptions.plugins.title.font.size) || 14);
+                    chartOptions.plugins.title.font = { size: Math.round(titleFontSize * scale) };
+                }
+                if (!chartOptions.scales) chartOptions.scales = {};
+                ['x', 'y'].forEach(axis => {
+                    if (!chartOptions.scales[axis]) chartOptions.scales[axis] = {};
+                    const ax = chartOptions.scales[axis];
+                    if (!ax.ticks) ax.ticks = {};
+                    const tickSize = ((ax.ticks.font && ax.ticks.font.size) || 12);
+                    ax.ticks.font = { size: Math.round(tickSize * scale) };
+                    if (!ax.grid) ax.grid = {};
+                    ax.grid.lineWidth = Math.max(1, ((ax.grid.lineWidth || 1) / scale));
+                    if (ax.title) {
+                        const titleSize = ((ax.title.font && ax.title.font.size) || 14);
+                        ax.title.font = { size: Math.round(titleSize * scale) };
+                    }
+                });
+                if (chartData && chartData.datasets) {
+                    chartData.datasets.forEach(ds => {
+                        ds.borderWidth = preferThin ? 0.4 : Math.max(1, (ds.borderWidth || 2) / scale);
+                        ds.borderCapStyle = preferThin ? 'butt' : ds.borderCapStyle;
+                        ds.borderJoinStyle = preferThin ? 'miter' : ds.borderJoinStyle;
+                        ds.pointRadius = ((ds.pointRadius || 3) * scale);
+                    });
+                }
+            }
+
+            async function generateReport() {
+                if (!analysisResults || (!analysisResults.groupA && !analysisResults.groupB)) {
+                    alert("請先執行分析以產生結果!");
+                    return;
+                }
+
+                // --- 核彈級修復：截圖前先清理 DOM ---
+                // 1. 強制讓 MathJax 完成渲染
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    await window.MathJax.typesetPromise();
+                }
+
+                // 2. 實體移除所有隱形重影元素 (mjx-assistive-mml)
+                const ghosts = document.querySelectorAll('mjx-assistive-mml');
+                if (ghosts.length > 0) {
+                    console.log(`[System] Found ${ghosts.length} ghost elements. Removing them...`);
+                    // 暫不彈出 alert 打擾，直接默默移除，除非測試需要
+                    ghosts.forEach(el => el.remove());
+                }
+
+                const reportArea = document.getElementById('reportArea');
+
+                const loadingMsg = document.createElement('div');
+                loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:white;padding:20px 40px;border-radius:8px;font-size:1.2em;z-index:9999;';
+                loadingMsg.textContent = '正在優化並生成報告...';
+                document.body.appendChild(loadingMsg);
+
+                try {
+                    const scale = 3; // 降低倍率以減少坐標偏移導致的重影
+
+                    const originalCanvas = await html2canvas(reportArea, {
+                        scale: scale,
+                        useCORS: true,
+                        backgroundColor: '#ffffff', // 強制白底
+                        logging: false,
+                        width: Math.min(reportArea.scrollWidth, 1400),
+                        height: reportArea.scrollHeight,
+                        windowWidth: Math.min(document.body.scrollWidth, 1400),
+                        onclone: (clonedDoc) => {
+                            // 再次檢查 clone 的文件
+                            const cloneGhosts = clonedDoc.querySelectorAll('mjx-assistive-mml');
+                            cloneGhosts.forEach(el => el.remove());
+
+                            const clonedArea = clonedDoc.getElementById('reportArea');
+                            if (clonedArea) {
+                                clonedArea.style.margin = '0 auto';
+                                clonedArea.style.overflow = 'visible';
+                                clonedArea.style.backgroundColor = '#ffffff';
+                                // 移除陰影與動畫
+                                clonedArea.style.boxShadow = 'none';
+                                clonedArea.style.animation = 'none';
+                            }
+
+                            // 強制所有文字樣式
+                            const all = clonedDoc.querySelectorAll('*');
+                            all.forEach(el => {
+                                el.style.textShadow = 'none';
+                                el.style.boxShadow = 'none';
+                                if (el.tagName.toLowerCase().startsWith('mjx-')) {
+                                    el.style.backgroundColor = 'transparent'; // 防止數學公式背景疊加
+                                }
+                            });
+                        }
+                    });
+
+                    const padding = 20 * scale;
+                    const newCanvas = document.createElement('canvas');
+                    newCanvas.width = originalCanvas.width + padding * 2;
+                    newCanvas.height = originalCanvas.height + padding * 2;
+                    const ctx = newCanvas.getContext('2d');
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+                    ctx.drawImage(originalCanvas, padding, padding);
+
+                    newCanvas.toBlob((blob) => {
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                        const mode = analysisResults.mode;
+                        link.download = `Weibull_分析報告_${mode === 'dual' ? '雙組比對' : '單組'}_${timestamp}.png`;
+                        link.click();
+                        document.body.removeChild(loadingMsg);
+                        alert(`✅ 報告已成功生成 (已清除重影)!\n尺寸: ${newCanvas.width} x ${newCanvas.height}`);
+                    }, 'image/png', 1.0);
+
+                } catch (error) {
+                    if (document.body.contains(loadingMsg)) document.body.removeChild(loadingMsg);
+                    alert("❌ 生成失敗: " + error.message);
+                    console.error(error);
+                }
+            }
+
+            function drawCharts(resultsA, resultsB) {
+                const groupNameA = document.getElementById('groupNameA').value;
+                const groupNameB = document.getElementById('groupNameB').value;
+                const markerR = markerReliabilityPercent;
+
+                // --- 1. Probability Plot (Scatter) ---
+                const probTraces = [];
+
+                if (resultsA) {
+                    // Data Points
+                    probTraces.push({
+                        x: resultsA.points.map(p => p.x),
+                        y: resultsA.points.map(p => p.y),
+                        mode: 'markers',
+                        type: 'scatter',
+                        name: `${groupNameA} - 失效點`,
+                        marker: { color: '#3498db', size: 8 }
+                    });
+
+                    // Regression Line
+                    let minXA = Math.min(...resultsA.points.map(p => p.x));
+                    let maxXA = Math.max(...resultsA.points.map(p => p.x));
+                    // Extend line slightly
+                    let range = maxXA - minXA;
+                    let lineX = [minXA - range * 0.1, maxXA + range * 0.1];
+                    let lineY = lineX.map(x => resultsA.slope * x + resultsA.intercept);
+
+                    probTraces.push({
+                        x: lineX,
+                        y: lineY,
+                        mode: 'lines',
+                        type: 'scatter',
+                        name: `${groupNameA} - 趨勢線`,
+                        line: { color: '#3498db', width: 2, dash: 'dash' }
+                    });
+                }
+
+                if (resultsB) {
+                    // Data Points
+                    probTraces.push({
+                        x: resultsB.points.map(p => p.x),
+                        y: resultsB.points.map(p => p.y),
+                        mode: 'markers',
+                        type: 'scatter',
+                        name: `${groupNameB} - 失效點`,
+                        marker: { color: '#e74c3c', size: 8 }
+                    });
+
+                    // Regression Line
+                    let minXB = Math.min(...resultsB.points.map(p => p.x));
+                    let maxXB = Math.max(...resultsB.points.map(p => p.x));
+                    let range = maxXB - minXB;
+                    let lineX = [minXB - range * 0.1, maxXB + range * 0.1];
+                    let lineY = lineX.map(x => resultsB.slope * x + resultsB.intercept);
+
+                    probTraces.push({
+                        x: lineX,
+                        y: lineY,
+                        mode: 'lines',
+                        type: 'scatter',
+                        name: `${groupNameB} - 趨勢線`,
+                        line: { color: '#e74c3c', width: 2, dash: 'dash' }
+                    });
+                }
+
+                const probLayout = {
+                    title: { text: (resultsA && resultsB) ? 'Weibull Probability Plot - 雙組比對' : 'Weibull Probability Plot' },
+                    xaxis: { title: 'ln(t)' },
+                    yaxis: { title: 'ln(-ln(1-F(t)))' },
+                    margin: { t: 40, r: 20, l: 60, b: 40 },
+                    showlegend: true,
+                    legend: { x: 0.02, y: 1 },
+                    hovermode: 'closest',
+                    plot_bgcolor: '#fff',
+                    paper_bgcolor: '#fff'
+                };
+
+                Plotly.newPlot('chartProb', probTraces, probLayout, { responsive: true, displayModeBar: true });
+
+
+                // --- 2. Reliability Plot (Line) ---
+                const relTraces = [];
+                const shapes = [];
+                const annotations = [];
+
+                // Helper to generate curve points
+                // props = { xanchor, yanchor, xshift, yshift }
+                const generateCurve = (res, color, name, props = { xanchor: 'center', yanchor: 'bottom', xshift: 0, yshift: 20 }) => {
+                    let points = [];
+                    let plotMax = res.maxT * 1.5;
+                    let step = plotMax / 500;
+                    for (let t = 0; t <= plotMax; t += step) {
+                        let R = Math.exp(-Math.pow(t / res.eta, res.beta)) * 100;
+                        points.push({ t, R });
+                    }
+
+                    // Main Curve
+                    relTraces.push({
+                        x: points.map(p => p.t),
+                        y: points.map(p => p.R),
+                        mode: 'lines',
+                        type: 'scatter',
+                        name: `${name} - R(t)`,
+                        line: { color: color, width: 2 }
+                    });
+
+                    // Marker Point Calculation
+                    let tMarker = res.eta * Math.pow(-Math.log(markerR / 100), 1 / res.beta);
+
+                    // Add Marker Point
+                    relTraces.push({
+                        x: [tMarker],
+                        y: [markerR],
+                        mode: 'markers',
+                        type: 'scatter',
+                        name: `${name} - R(${markerR}%)`,
+                        marker: { color: color, size: 10, symbol: 'circle' },
+                        showlegend: false
+                    });
+
+                    // Vertical Dashed Line
+                    shapes.push({
+                        type: 'line',
+                        x0: tMarker, y0: 0,
+                        x1: tMarker, y1: markerR,
+                        line: { color: color, width: 1, dash: 'dash' }
+                    });
+
+                    // Horizontal Dashed Line (Optional, but helps read value)
+                    shapes.push({
+                        type: 'line',
+                        x0: 0, y0: markerR,
+                        x1: tMarker, y1: markerR,
+                        line: { color: '#aaa', width: 1, dash: 'dot' }
+                    });
+
+                    // Annotation
+                    annotations.push({
+                        x: tMarker,
+                        y: markerR,
+                        xref: 'x', yref: 'y',
+                        text: `t=${tMarker.toFixed(1)}`,
+                        showarrow: false,
+                        xanchor: props.xanchor,
+                        yanchor: props.yanchor,
+                        xshift: props.xshift,
+                        yshift: props.yshift,
+                        bgcolor: color,
+                        font: { color: 'white' },
+                        bordercolor: color,
+                        borderwidth: 1,
+                        borderpad: 4
+                    });
+
+                    return tMarker;
+                };
+
+                // 在雙組模式下，分配不同的位置
+                // Group A: 左下方 (Bottom-Left relative to label, so Top-Right anchor logic? No, position logic)
+                // Plotly anchors define which part of the TEXT BOX is at the coordinate.
+
+                // Group A (Blue) -> Label at Bottom-Left of point
+                // Anchor logic: xanchor='right' (box right touches point), yanchor='top' (box top touches point)
+                const propsA = { xanchor: 'right', yanchor: 'top', xshift: -5, yshift: -5 };
+
+                // Group B (Red) -> Label at Top-Right of point
+                // Anchor logic: xanchor='left' (box left touches point), yanchor='bottom' (box bottom touches point)
+                const propsB = { xanchor: 'left', yanchor: 'bottom', xshift: 5, yshift: 5 };
+
+                // Single Mode Default: Top Center
+                const propsDefault = { xanchor: 'center', yanchor: 'bottom', xshift: 0, yshift: 15 };
+
+                if (resultsA) {
+                    // 如果有 B，則用 A 專屬位置；否則用預設居中
+                    let p = resultsB ? propsA : propsDefault;
+                    generateCurve(resultsA, '#3498db', groupNameA, p);
+                }
+
+                if (resultsB) {
+                    let p = resultsA ? propsB : propsDefault;
+                    generateCurve(resultsB, '#e74c3c', groupNameB, p);
+                }
+
+                const relLayout = {
+                    title: { text: (resultsA && resultsB) ? '可靠度曲線 (Reliability Curve)' : '可靠度曲線 (Reliability Curve)' },
+                    xaxis: { title: '壽命 (t)' },
+                    yaxis: { title: '可靠度 (%)', range: [0, 105] },
+                    margin: { t: 40, r: 20, l: 60, b: 40 },
+                    showlegend: true,
+                    legend: { x: 1, y: 1, xanchor: 'right' },
+                    hovermode: 'x unified',
+                    shapes: shapes,
+                    annotations: annotations,
+                    plot_bgcolor: '#fff',
+                    paper_bgcolor: '#fff'
+                };
+
+                Plotly.newPlot('chartRel', relTraces, relLayout, { responsive: true, displayModeBar: true });
+            }
+        </script>
+
 </body>
-
-</html>
