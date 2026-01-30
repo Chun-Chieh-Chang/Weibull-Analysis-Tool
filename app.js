@@ -233,17 +233,19 @@ function displayUIResults(resA, resB) {
     document.getElementById('resultPanel').style.display = 'block';
 
     const updateStats = (tag, res) => {
-        const el = document.getElementById(`groupResult${tag}`);
-        if (!el) return;
+        const badge = document.getElementById(`group${tag}NameBadge`);
+        const resultCard = document.querySelector(`.group-result.group-${tag.toLowerCase()}`);
+
         if (res) {
-            el.style.display = 'block';
-            document.getElementById(`group${tag}TitleResult`).textContent = document.getElementById(`groupName${tag}`).value;
+            if (resultCard) resultCard.style.display = 'block';
+            if (badge) badge.textContent = ` (${document.getElementById(`groupName${tag}`).value})`;
+
             document.getElementById(`valBeta${tag}`).textContent = res.beta.toFixed(3);
             document.getElementById(`valEta${tag}`).textContent = Math.round(res.eta).toLocaleString();
             document.getElementById(`valR2${tag}`).textContent = res.r2.toFixed(4);
             document.getElementById(`descText${tag}`).textContent = `失效判定: ${res.typeText}`;
         } else {
-            el.style.display = 'none';
+            if (resultCard) resultCard.style.display = 'none';
         }
     };
 
