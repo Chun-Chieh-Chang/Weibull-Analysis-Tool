@@ -34,7 +34,45 @@ function loadDemo(group) {
  */
 window.onload = function () {
     setupEventListeners();
+    setAnalysisMode('dual'); // 預設雙組比對
+
+    // 確保輸入框焦點
+    const tInputA = document.getElementById('tInputA');
+    if (tInputA) tInputA.focus();
+
+    // 更新主題按鈕圖示
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) {
+        const isDark = !document.body.classList.contains('light-mode');
+        btn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+    }
 };
+
+/**
+ * 設置分析模式
+ */
+function setAnalysisMode(mode) {
+    const container = document.querySelector('.container');
+    const panelB = document.getElementById('panelGroupB');
+    const runBtn = document.querySelector('.btn-calc');
+
+    if (mode === 'single') {
+        container.classList.add('mode-single');
+        container.classList.remove('mode-dual');
+        if (panelB) panelB.style.display = 'none';
+        if (runBtn) runBtn.innerHTML = '🔍 開始分析';
+    } else {
+        container.classList.remove('mode-single');
+        container.classList.add('mode-dual');
+        if (panelB) panelB.style.display = 'block';
+        if (runBtn) runBtn.innerHTML = '🔍 開始比對';
+    }
+
+    // 如果已有結果，根據模式隱藏/顯示 B 組結果
+    if (analysisResults) {
+        displayUIResults(analysisResults.groupA, analysisResults.groupB);
+    }
+}
 
 function setupEventListeners() {
     ['A', 'B'].forEach(group => {
@@ -46,11 +84,13 @@ function setupEventListeners() {
         }
     });
 
-    const inputRel = document.getElementById('inputReliability');
+    const inputRel = document.getElementById('markerRInput');
     if (inputRel) {
         inputRel.addEventListener('input', () => {
-            const val = parseFloat(inputRel.value);
-            if (isNaN(val) || val <= 0 || val >= 100) return;
+            let val = parseFloat(inputRel.value);
+            if (isNaN(val)) return;
+            if (val < 0) val = 0;
+            if (val > 100) val = 100;
             markerReliabilityPercent = val;
             if (analysisResults) updateReliabilityMarkers(markerReliabilityPercent);
         });
@@ -211,7 +251,9 @@ function displayUIResults(resA, resB) {
     updateStats('B', resB);
 
     const diffPanel = document.getElementById('diffPanel');
-    if (resA && resB) {
+    const isDual = document.querySelector('.container').classList.contains('mode-dual');
+
+    if (resA && resB && isDual) {
         diffPanel.style.display = 'block';
         const bDiff = ((resB.beta - resA.beta) / resA.beta * 100);
         const eDiff = ((resB.eta - resA.eta) / resA.eta * 100);
@@ -401,6 +443,7 @@ function exportSingleChart(id) {
 
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 function openTheoryTab(id) { document.getElementById('theoryModal').style.display = 'flex'; switchTheoryTab(id); }
+function openTheory() { openTheoryTab('basics'); }
 function closeTheory() { document.getElementById('theoryModal').style.display = 'none'; }
 function switchTheoryTab(id) {
     document.querySelectorAll('.p-tab').forEach(t => t.classList.remove('active'));
@@ -506,4 +549,29 @@ function toggleTheme() {
     if (analysisResults) {
         drawAnalytics(analysisResults.groupA, analysisResults.groupB);
     }
+}
+
+// 相容性別名與輔助函數
+const clearAllData = resetAll;
+const deleteRow = deleteDataRow;
+
+function loadDemo(group) {
+    if (group === 'A') {
+        dataGroupA = [
+            { t: 300, s: 'F' }, { t: 450, s: 'F' }, { t: 600, s: 'F' }, { t: 750, s: 'S' },
+            { t: 900, s: 'F' }, { t: 1100, s: 'F' }, { t: 1300, s: 'F' }
+        ];
+    } else {
+        dataGroupB = [
+            { t: 400, s: 'F' }, { t: 550, s: 'F' }, { t: 750, s: 'F' }, { t: 900, s: 'S' },
+            { t: 1100, s: 'F' }, { t: 1350, s: 'F' }, { t: 1600, s: 'F' }
+        ];
+    }
+    sortData(group);
+    updateTable(group);
+}
+
+function clearData(group) {
+    if (group === 'A') dataGroupA = []; else dataGroupB = [];
+    updateTable(group);
 }
