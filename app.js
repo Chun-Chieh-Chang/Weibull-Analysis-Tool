@@ -448,10 +448,28 @@ function openTheoryTab(id) { document.getElementById('theoryModal').style.displa
 function openTheory() { openTheoryTab('basics'); }
 function closeTheory() { document.getElementById('theoryModal').style.display = 'none'; }
 function switchTheoryTab(id) {
+    // 移除所有標籤的 active 狀態
     document.querySelectorAll('.p-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.theory-section').forEach(s => s.style.display = 'none');
-    document.getElementById(`theory-${id}`).style.display = 'block';
-    const activeTab = Array.from(document.querySelectorAll('.p-tab')).find(t => t.innerText.includes(id === 'basics' ? '基礎' : id === 'params' ? '參數' : id === 'blife' ? 'B-Life' : '樣本'));
+
+    // 隱藏所有理論區塊
+    const sections = document.querySelectorAll('.theory-section');
+    sections.forEach(s => s.style.display = 'none');
+
+    // 顯示指定區塊 (增加安全檢查)
+    const targetSection = document.getElementById(`theory-${id}`);
+    if (targetSection) {
+        targetSection.style.display = 'block';
+    } else if (sections.length > 0) {
+        // 如果找不到 ID，但有 theory-section，則顯示第一個作為備案
+        sections[0].style.display = 'block';
+    }
+
+    // 激活對應標籤
+    const tabLabel = id === 'basics' ? '基礎' :
+        id === 'params' ? '參數' :
+            id === 'blife' ? 'B-Life' :
+                id === 'samples' ? '樣本' : '比對';
+    const activeTab = Array.from(document.querySelectorAll('.p-tab')).find(t => t.innerText.includes(tabLabel));
     if (activeTab) activeTab.classList.add('active');
 }
 
