@@ -823,6 +823,77 @@
                 transform: translateY(0);
             }
         }
+
+        /* ========================================
+           全域對比度補強
+           ======================================== */
+
+        /* Placeholder 文字對比度 */
+        ::placeholder {
+            color: var(--text-sub);
+            opacity: 0.8;
+        }
+
+        .light-mode ::placeholder {
+            color: #64748b;
+            opacity: 0.9;
+        }
+
+        /* 淺色模式下差異面板強化 */
+        .light-mode .diff-header {
+            color: #d97706 !important;
+        }
+
+        .light-mode .diff-panel {
+            background: rgba(254, 243, 199, 0.3) !important;
+            border-color: rgba(234, 179, 8, 0.4) !important;
+        }
+
+        .light-mode .diff-interpretation {
+            color: #475569 !important;
+        }
+
+        /* 確保所有輸入框在淺色模式下有正確顏色 */
+        .light-mode input.calc-input,
+        .light-mode select.calc-input,
+        .light-mode textarea {
+            color: #1e293b !important;
+            background-color: #ffffff;
+        }
+
+        .light-mode input.calc-input:focus,
+        .light-mode select.calc-input:focus {
+            border-color: #0ea5e9;
+        }
+
+        /* 統計數據標籤強化 */
+        .stat-label {
+            opacity: 1 !important;
+        }
+
+        .light-mode .stat-label {
+            color: #475569 !important;
+        }
+
+        /* 確保深色模式下描述文字可見 */
+        .desc-text {
+            opacity: 1 !important;
+        }
+
+        /* 修正淺色模式下按鈕文字 */
+        .light-mode button {
+            text-shadow: none;
+        }
+
+        /* 批次輸入說明文字 */
+        .batch-help {
+            opacity: 1 !important;
+        }
+
+        .light-mode .batch-help {
+            background-color: rgba(13, 148, 136, 0.15) !important;
+            color: #0f766e !important;
+        }
     </style>
 </head>
 
