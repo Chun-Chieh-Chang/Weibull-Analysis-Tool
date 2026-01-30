@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weibull 可靠度分析 (Mouldex專用版)</title>
+
+    <!-- 1. 引入 Chart.js 用於繪圖 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- 2. 引入 MathJax 用於顯示數學公式 (理論說明部分) -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- 3. 引入 html2canvas 用於生成報告截圖 -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+    <style>
+        /* 全域樣式 */
+        body {
+            font-family: "Microsoft JhengHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            background-color: #f4f6f8;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 40px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        /* 標題樣式 */
+        h1.main-title {
+            text-align: center;
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-left: 5px solid #3498db;
+            padding-left: 10px;
+        }
+
+        h3 {
+            color: #2980b9;
+            margin-top: 25px;
+        }
+
+        /* --- 計算機 UI 樣式 --- */
+        .input-area {
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #bdc3c7;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        .col-left {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .col-right {
+            flex: 2;
+            min-width: 300px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+        }
+
+        input.calc-input,
+        select.calc-input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        input.calc-input:focus,
+        select.calc-input:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            transition: 0.3s;
+        }
+
+        .btn-add {
+            background-color: #3498db;
+        }
+
+        .btn-add:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-calc {
+            background-color: #27ae60;
+            font-size: 1.1em;
+        }
+
+        .btn-calc:hover {
+            background-color: #2ecc71;
+        }
+
+        .btn-demo {
+            background-color: #f39c12;
+        }
+
+        .btn-clear {
+            background-color: #95a5a6;
+        }
+
+        .btn-del {
+            background-color: #e74c3c;
+            width: auto;
+            padding: 5px 10px;
+            font-size: 0.8em;
+        }
+
+        .btn-batch {
+            background-color: #16a085;
+        }
+
+        .btn-batch:hover {
+            background-color: #1abc9c;
+        }
+
+        .btn-export {
+            background-color: #9b59b6;
+            font-size: 1.05em;
+        }
+
+        .btn-export:hover {
+            background-color: #8e44ad;
+        }
+
+        .btn-report {
+            background-color: #e67e22;
+            font-size: 1.05em;
+        }
+
+        .btn-report:hover {
+            background-color: #d35400;
+        }
+
+        .btn-charts {
+            background-color: #27ae60;
+            font-size: 1.05em;
+        }
+
+        .btn-charts:hover {
+            background-color: #2ecc71;
+        }
+
+        .btn-theory {
+            background-color: #3498db;
+            font-size: 1.05em;
+        }
+
+        .btn-theory:hover {
+            background-color: #2980b9;
+        }
+
+        .export-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .export-grid-three {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .export-grid-four {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        /* 報告區域標記 */
+        #reportArea {
+            position: relative;
+        }
+
+        /* 批次輸入彈出視窗 */
+        .batch-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .batch-modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .batch-modal-header {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .batch-textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            border: 2px solid #bdc3c7;
+            border-radius: 4px;
+            font-family: "Courier New", monospace;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        .batch-textarea:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .batch-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .batch-help {
+            background-color: #e8f6f3;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+            border: 1px solid #ddd;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #34495e;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .result-panel {
+            background: #e8f8f5;
+            border: 2px solid #2ecc71;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .stat-value {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #27ae60;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        /* 計算機內的公式顯示區 */
+        .formula-display {
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0 20px 0;
+            font-family: "Times New Roman", Times, serif;
+            font-size: 1.5em;
+            color: #2c3e50;
+            border: 1px dashed #2ecc71;
+        }
+
+        canvas {
+            background: #fff;
+            margin-top: 20px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+
+        /* --- 理論說明區專用樣式 --- */
+        .theory-section {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 3px dashed #eee;
+        }
+
+        .formula-box {
+            background-color: #f0f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.2em;
+            border: 1px solid #dce4ec;
+        }
+
+        .calculation-example {
+            background-color: #e8f6f3;
+            padding: 20px;
+            border-radius: 5px;
+            border: 1px solid #a2d9ce;
+            margin-bottom: 15px;
+        }
+
+        .code-block {
+            background-color: #282c34;
+            color: #abb2bf;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: Consolas, Monaco, "Andale Mono", monospace;
+        }
+
+        ul {
+            margin-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong.highlight-text {
+            color: #c0392b;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- ========================================= -->
+        <!-- 第一部分：Weibull 計算機工具 -->
+        <!-- ========================================= -->
+        <div id="reportArea">
+            <h1 class="main-title">Weibull 可靠度分析 (Mouldex專用版)</h1>
+
+            <div class="row">
+                <!-- 左側：輸入區 -->
+                <div class="col-left">
+                    <div class="input-area">
+                        <h3>輸入數據</h3>
+                        <p style="font-size:0.8em; color:#666;">
+                            💡 提示：輸入數字後按下 <strong>Enter</strong> 鍵即可連續輸入。
+                        </p>
+                        <label>圖形標題:</label>
+                        <input type="text" id="chartTitle" class="calc-input" placeholder="輸入圖形標題（選填）" value="可靠度曲線">
+                        <label>標示 R(t) 值 (%)</label>
+                        <input type="number" id="rValue" class="calc-input" placeholder="輸入 R(t) 值（預設 95%）" value="95" min="1" max="99" step="1">
+                        <label>壽命 (t):</label>
+                        <input type="number" id="tInput" class="calc-input" placeholder="輸入壽命後按 Enter" step="any">
+                        <label>狀態:</label>
+                        <select id="sInput" class="calc-input">
+                            <option value="F">失效 (Failure)</option>
+                            <option value="S">右設限 (Suspended)</option>
+                        </select>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;">
+                            <button class="btn-add" onclick="showBatchInput()">批次輸入</button>
+                            <button class="btn-demo" onclick="loadDemo()">載入範例</button>
+                        </div>
+                        <button class="btn-clear" onclick="clearData()">清空重置</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="dataTable">
+                            <thead>
+                                <tr>
+                                    <th>序號</th>
+                                    <th>壽命</th>
+                                    <th>狀態</th>
+                                    <th>刪除</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <button class="btn-calc" onclick="runAnalysis()">開始計算與繪圖</button>
+                    <div class="export-grid-four">
+                        <button class="btn-export" onclick="exportData()">📊 數據匯出</button>
+                        <button class="btn-charts" onclick="exportCharts()">🖼️ 圖表匯出</button>
+                        <button class="btn-report" onclick="generateReport()">📄 產生報告</button>
+                        <button class="btn-theory" onclick="openTheory()">📘 理論指南</button>
+                    </div>
+                </div>
+
+                <!-- 右側：結果區 -->
+                <div class="col-right">
+                    <div id="resultPanel" class="result-panel">
+                        <h3>分析結果</h3>
+
+                        <!-- 簡易公式顯示 -->
+                        <div class="formula-display">
+                            R(t) = e <sup>-( t / &eta; )<sup>&beta;</sup></sup>
+                        </div>
+
+                        <div class="stat-grid">
+                            <div>
+                                <div class="stat-label">形狀參數 Beta (β)</div>
+                                <div class="stat-value" id="valBeta">-</div>
+                            </div>
+                            <div>
+                                <div class="stat-label">特徵壽命 Eta (η)</div>
+                                <div class="stat-value" id="valEta">-</div>
+                            </div>
+                            <div>
+                                <div class="stat-label">擬合度 R²</div>
+                                <div class="stat-value" id="valR2">-</div>
+                            </div>
+                        </div>
+                        <div id="descText"
+                            style="margin-top: 15px; color: #7f8c8d; font-size: 0.9em; font-weight: bold;"></div>
+                    </div>
+                    <canvas id="chartProb"></canvas>
+                    <canvas id="chartRel"></canvas>
+                </div>
+            </div>
+        </div>
+        <!-- reportArea 結束 -->
+
+        <!-- ========================================= -->
+        <!-- 第二部分：理論說明 (整合內容) -->
+        <!-- ========================================= -->
+        <div class="theory-section" style="display:none;">
+            <h1 style="text-align: center; color: #7f8c8d; font-size: 1.5em;">Weibull 分析理論指南</h1>
+            <p>Weibull（韋伯）分析是可靠度工程中最常用的方法，因為它非常靈活，可以模擬各種失效模式（早期失效、隨機失效、磨耗失效）。以下是完整的計算流程與公式解析。</p>
+
+            <h2>1. 數據類型：失效與右設限</h2>
+            <p>在可靠度測試中，我們會遇到兩種數據類型：</p>
+
+            <h3>失效數據 (Failure, F)</h3>
+            <p>產品在測試期間<strong class="highlight-text">確實發生失效</strong>的數據點。例如：產品在運作 300 小時後損壞。這是最直接、最有價值的數據。</p>
+
+            <h3>右設限數據 (Suspended/Censored, S)</h3>
+            <p><strong>右設限</strong>是指產品在測試結束時<strong class="highlight-text">仍然正常運作</strong>，我們只知道它「至少」存活了這麼久，但不知道實際壽命。
+            </p>
+
+            <div class="calculation-example" style="background-color: #fff3e0; border-color: #ffb74d;">
+                <h3>為什麼會有右設限數據？</h3>
+                <ul>
+                    <li><strong>測試時間限制：</strong>產品測試 500 小時後結束，但有些樣品還沒壞 → 記錄為「500 小時，設限 (S)」</li>
+                    <li><strong>樣品移除：</strong>測試中途因其他原因（非失效）移除樣品，例如送去做其他檢測</li>
+                    <li><strong>成本考量：</strong>長時間測試成本高，無法等到所有樣品都失效</li>
+                </ul>
+                <p><strong class="highlight-text">重要：</strong>右設限數據雖然沒有失效，但仍然提供了「產品至少能活這麼久」的資訊，對於提升分析準確度非常有幫助！</p>
+            </div>
+
+            <h3>實際範例</h3>
+            <p>假設測試 5 個產品，測試時間上限 600 小時：</p>
+            <ul>
+                <li>產品 A：300 小時失效 → <strong>300, F</strong></li>
+                <li>產品 B：450 小時失效 → <strong>450, F</strong></li>
+                <li>產品 C：600 小時仍正常 → <strong>600, S</strong> (右設限)</li>
+                <li>產品 D：550 小時失效 → <strong>550, F</strong></li>
+                <li>產品 E：600 小時仍正常 → <strong>600, S</strong> (右設限)</li>
+            </ul>
+            <p>這樣的數據組合可以進行 Weibull 分析，右設限數據會被正確納入計算。</p>
+
+            <!-- 新增區塊：R(t) 與 F(t) 的關係 -->
+            <h2>1.5 可靠度與不可靠度的關係</h2>
+            <p>在工程實務中，產品的狀態是一體兩面的：不是「存活」就是「已失效」。因此我們定義了互補的兩個指標：</p>
+            
+            <ul>
+                <li><strong>\(R(t)\) 可靠度 (Reliability)</strong>：
+                    <br>通俗名稱：<strong class="highlight-text">存活率 (Survival Rate)</strong>
+                    <br>定義：代表產品運作到時間 \(t\) <strong>仍未損壞</strong>的機率。
+                </li>
+                <li style="margin-top: 10px;"><strong>\(F(t)\) 不可靠度 (Unreliability)</strong>：
+                    <br>通俗名稱：<strong class="highlight-text">累積失效機率 (Cumulative Probability of Failure)</strong>
+                    <br>定義：代表產品從開始運作直到時間 \(t\) <strong>已經損壞</strong>的總比例（即 CDF）。
+                </li>
+            </ul>
+
+            <div class="formula-box">
+                $$ R(t) + F(t) = 1 $$
+                <p style="font-size: 0.8em; color: #555; margin-top: 5px;">(存活率) + (累積失效機率) = 100%</p>
+            </div>
+
+            <h2>2. 核心公式</h2>
+            <p>Weibull 分佈的 <strong class="highlight-text">可靠度函數 (Reliability Function) \(R(t)\)</strong> 公式如下：</p>
+
+            <div class="formula-box">
+                $$ R(t) = e^{-(t/\eta)^\beta} $$
+            </div>
+
+            <ul>
+                <li><strong>\(t\)</strong>：壽命（或行駛里程、循環次數）。</li>
+                <li><strong>\(R(t)\)</strong>：在時間 \(t\) 時，產品尚未失效的機率（可靠度）。</li>
+                <li><strong>\(\beta\) (Beta)</strong>：形狀參數 (Shape Parameter)，決定失效模式。</li>
+                <li><strong>\(\eta\) (Eta)</strong>：尺度參數 (Scale Parameter)，又稱特徵壽命。</li>
+            </ul>
+
+            <h2>3. 理解關鍵參數</h2>
+            <p>在代入公式前，必須先透過數據擬合求出 \(\beta\) 和 \(\eta\)。</p>
+
+            <h3>\(\beta\) (形狀參數)：決定失效類型</h3>
+            <ul>
+                <li><strong>\(\beta < 1\)</strong>：早期失效期 (Infant Mortality)。產品剛出廠就壞，通常是生產瑕疵。</li>
+                <li><strong>\(\beta = 1\)</strong>：隨機失效期 (Random Failures)。失效律是常數，類似指數分佈。</li>
+                <li><strong>\(\beta > 1\)</strong>：磨耗失效期 (Wear-out)。產品老化、疲勞，失效律隨時間上升。</li>
+            </ul>
+
+            <h3>\(\eta\) (尺度參數)：特徵壽命</h3>
+            <p>代表當 <strong>63.2%</strong> 的產品已經失效時的時間點（此時 \(R(t) = 36.8\%\)）。這是衡量產品壽命長短的主要指標。</p>
+
+            <h3>\(R^2\) (擬合度)：數據可信度指標</h3>
+            <p><strong>擬合度 (R-squared, R²)</strong> 是用來評估 Weibull 模型與實際數據的吻合程度，數值範圍為 0 到 1。</p>
+            <ul>
+                <li><strong>\(R^2 \geq 0.95\)</strong>：優秀擬合，數據非常符合 Weibull 分佈，分析結果高度可信。</li>
+                <li><strong>\(0.90 \leq R^2 < 0.95\)</strong>：良好擬合，結果可接受，但可能存在少量異常數據。</li>
+                <li><strong>\(0.80 \leq R^2 < 0.90\)</strong>：尚可擬合，建議檢查數據品質或考慮其他分佈模型。</li>
+                <li><strong>\(R^2 < 0.80\)</strong>：擬合不佳，數據可能不符合 Weibull 分佈，或存在嚴重異常值。</li>
+            </ul>
+            <p><strong class="highlight-text">注意：</strong>如果 \(R^2\) 過低，建議重新檢視數據來源、測試條件是否一致，或考慮使用對數常態分佈等其他模型。</p>
+
+            <h2>4. 計算步驟實例</h2>
+            <p>假設你分析一組數據後得到參數：<strong class="highlight-text">\(\beta = 2.5\)</strong> (磨耗型) 與 <strong
+                    class="highlight-text">\(\eta = 1000\) 小時</strong>。</p>
+
+            <div class="calculation-example">
+                <h3>情境 A：計算特定時間的可靠度</h3>
+                <p><strong>問題：</strong>產品運作 <strong>500 小時</strong> 後，還存活的機率是多少？</p>
+                <p>代入公式：</p>
+                $$ R(500) = e^{-(500/1000)^{2.5}} $$
+                $$ R(500) = e^{-(0.5)^{2.5}} = e^{-0.1768} \approx 0.838 $$
+                <p><strong>答案：</strong> 可靠度為 <strong>83.8%</strong>。</p>
+            </div>
+            <br>
+            <div class="calculation-example" style="background-color: #fff8e1; border-color: #ffe082;">
+                <h3>情境 B：計算 B10 壽命 (B10 Life)</h3>
+                <p><strong>問題：</strong>多少時間後，會有 10% 的產品失效（即 90% 可靠度）？</p>
+                <p>公式變形： \( t = \eta \times (-\ln(R))^{1/\beta} \)</p>
+                $$ t = 1000 \times (-\ln(0.9))^{1/2.5} $$
+                $$ t = 1000 \times (0.10536)^{0.4} $$
+                $$ t \approx 1000 \times 0.406 = 406 \text{ 小時} $$
+                <p><strong>答案：</strong> B10 壽命為 <strong>406 小時</strong>。</p>
+            </div>
+
+            <h2>4. B-Life 概念與工程意義</h2>
+            <p>在可靠度工程（特別是 Weibull 分析）中，「B」 代表 Basic Life（基本壽命），後面的數字代表 累積失效百分比。簡單來說，Bx 壽命就是：「當 x% 的產品失效時，所經過的時間」。以下是
+                B1、B10、B63.2 的詳細定義與它們在工程上的意義：</p>
+
+            <h3>1. B10 壽命 (B10 Life) —— 行業通用標準</h3>
+            <div class="calculation-example" style="background-color: #e8f8f5; border-color: #2ecc71;">
+                <p><strong>定義：</strong>當 10% 的產品失效（也就是還有 90% 存活）的時間點。</p>
+                <p><strong>數學意義：</strong>可靠度 \(R(t) = 90\%\) 或 \(0.9\)。</p>
+                <p><strong>應用場景：</strong>這是汽車業、軸承業、馬達業最常用的指標。通常用來設定 <strong>保固期 (Warranty)</strong>。</p>
+                <p><strong>實際例子：</strong>如果車廠算出某零件的 B10 壽命是 3年，代表 3年內預計會有 10% 的車回來維修，這有助於計算保固成本。</p>
+            </div>
+
+            <h3>2. B1 壽命 (B1 Life) —— 高安全標準</h3>
+            <div class="calculation-example" style="background-color: #f8f9fa; border-color: #495057;">
+                <p><strong>定義：</strong>當 1% 的產品失效（也就是還有 99% 存活）的時間點。</p>
+                <p><strong>數學意義：</strong>可靠度 \(R(t) = 99\%\) 或 \(0.99\)。</p>
+                <p><strong>應用場景：</strong>用於高安全性、高可靠度的產品，如 <strong>航太、醫療設備、汽車安全氣囊</strong>。對於這些產品，10%
+                    的失效是不可接受的，必須確保極少量的產品會在該時間點前壞掉。</p>
+            </div>
+
+            <h3>3. B63.2 (特徵壽命 / \(\eta\)) —— 數學基準</h3>
+            <div class="calculation-example" style="background-color: #fff3cd; border-color: #ffc107;">
+                <p><strong>定義：</strong>當 63.2% 的產品失效（只剩 36.8% 存活）的時間點。</p>
+                <p><strong>為什麼是 63.2%？</strong>這來自 Weibull 的公式結構。當時間 \(t\) 正好等於尺度參數 \(\eta\) 時：</p>
+                <div class="formula-box">
+                    $$ R(\eta) = e^{-(\eta/\eta)^\beta} = e^{-1} \approx 0.3678 $$
+                    $$ F(t) = 1 - 0.3678 = 0.6322 \text{ (即 63.2%)} $$
+                </div>
+                <p><strong>意義：</strong>B63.2 就是 \(\eta\) (Eta, 尺度參數)。它代表這批產品的「特徵壽命」(Characteristic Life)。雖然 63%
+                    的失效率聽起來很高（大半都壞了），但它在數學上是一個非常穩定的基準点，用來衡量整體壽命的長短。如果 \(\eta\) 越大，代表產品整體撐得越久。</p>
+            </div>
+
+            <h3>總結比較表</h3>
+            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <thead>
+                    <tr style="background-color: #34495e; color: white;">
+                        <th style="padding: 12px; border: 1px solid #ddd;">指標</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">失效比例</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">存活率 (可靠度)</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">意義與用途</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background-color: #ffebee;">
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;"><strong>B1</strong></td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">1%</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">99%</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">極低風險：用於飛機、醫療、安全件。</td>
+                    </tr>
+                    <tr style="background-color: #e8f5e9;">
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;"><strong>B10</strong></td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">10%</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">90%</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">工業標準：用於制定保固期、馬達壽命、一般電子產品。</td>
+                    </tr>
+                    <tr style="background-color: #f3e5f5;">
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;"><strong>B50</strong></td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">50%</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">50%</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">中位數壽命：一半壞了一半好的時間點 (平均壽命)。</td>
+                    </tr>
+                    <tr style="background-color: #fff3e0;">
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;"><strong>B63.2</strong>
+                        </td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">63.2%</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">36.8%</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">特徵壽命 (\(\eta\))：Weibull 的尺度參數，數學上的基準點。</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>如何透過我們剛做的網頁計算？</h3>
+            <div class="calculation-example" style="background-color: #e3f2fd; border-color: #2196f3;">
+                <p>在我們的網頁工具算出 \(\beta\) 和 \(\eta\) 後，您可以手動用以下公式反推這些 B-Life：</p>
+                <div class="formula-box">
+                    $$ t = \eta \times (-\ln(R))^{1/\beta} $$
+                </div>
+                <ul>
+                    <li><strong>算 B1：</strong>將 R 設為 0.99</li>
+                    <li><strong>算 B10：</strong>將 R 設為 0.90</li>
+                    <li><strong>算 B63.2：</strong>答案就是網頁上顯示的 Eta (\(\eta\)) 值。</li>
+                </ul>
+            </div>
+
+            <h2>5. 樣本數量建議：多少顆才夠？</h2>
+            <p>進行可靠度分析（特別是 Weibull 分析）時，樣本數量的選擇永遠是<strong
+                    class="highlight-text">「統計精確度」與「測試成本/時間」之間的權衡</strong>。雖然數學上只需要 <strong>2 個失效點</strong>就能畫出一條線（求出
+                \(\beta\) 和 \(\eta\)），但在工程實務上，這是遠遠不夠的。</p>
+
+            <h3>建議的樣本數量 (Rule of Thumb)</h3>
+            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <thead>
+                    <tr style="background-color: #34495e; color: white;">
+                        <th style="padding: 12px; border: 1px solid #ddd;">樣本數量</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">評價</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">適用情境</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;"><strong>3 - 5 顆</strong>
+                        </td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #e74c3c;">
+                            <strong>極低 (高風險)</strong>
+                        </td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">僅適用於非常昂貴的產品（如衛星、大型模具）或初步摸底測試。誤差範圍極大，僅能看大致趨勢。
+                        </td>
+                    </tr>
+                    <tr style="background-color: #f9f9f9;">
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;"><strong>6 - 10 顆</strong>
+                        </td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #f39c12;">
+                            <strong>勉強接受</strong>
+                        </td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">適用於開發階段的快速驗證。可以算出參數，但對於 B10 壽命（早期失效）的預測仍不夠準確。
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;"><strong>10 - 20
+                                顆</strong></td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #27ae60;">
+                            <strong>工程推薦 (甜蜜點)</strong>
+                        </td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">大多數工業標準的選擇。在成本與精確度之間取得最佳平衡，足以判斷失效模式
+                            (\(\beta\)) 並估算 B10 壽命。</td>
+                    </tr>
+                    <tr style="background-color: #f9f9f9;">
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;"><strong>20 - 30
+                                顆+</strong></td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #2980b9;">
+                            <strong>統計顯著</strong>
+                        </td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">適用於高可靠度要求（如車規、醫療、航太）或低成本元件。能提供較窄的信賴區間。</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>為什麼？(背後的統計原因)</h3>
+
+            <div class="calculation-example" style="background-color: #e8f5e9; border-color: #81c784;">
+                <h3>A. 信賴區間 (Confidence Bounds) 的寬度</h3>
+                <p>Weibull 分析算出的只是「估計值」。樣本越少，不確定性（信賴區間）就越寬。</p>
+                <p><strong>例子：</strong></p>
+                <ul>
+                    <li><strong>5 顆樣品：</strong>算出 B10 壽命是 500 小時，但 90% 信賴區間可能是 <strong>[100 小時, 2500
+                            小時]</strong>。這範圍大到幾乎無法做決策。</li>
+                    <li><strong>20 顆樣品：</strong>算出 B10 壽命是 500 小時，信賴區間可能縮小至 <strong>[400 小時, 650
+                            小時]</strong>。這數據就很有參考價值。</li>
+                </ul>
+            </div>
+
+            <div class="calculation-example" style="background-color: #fff3e0; border-color: #ffb74d;">
+                <h3>B. 為了抓到「早期失效」(B1/B10)</h3>
+                <p>工程師通常不關心平均壽命 (\(\eta\), B63.2)，而是關心<strong class="highlight-text">「最早壞的那幾顆」</strong> (B10 或 B1)。</p>
+                <ul>
+                    <li>Weibull 分佈的<strong>尾端（早期失效區）</strong>對數據非常敏感。</li>
+                    <li>如果樣本太少，你很難確定最早失效的那顆是「隨機的特例」還是「整批產品的常態」。</li>
+                    <li>數據量大才能穩定描繪出曲線的尾端。</li>
+                </ul>
+            </div>
+
+            <div class="calculation-example" style="background-color: #fce4ec; border-color: #f48fb1;">
+                <h3>C. 確認失效模式 (\(\beta\) 值)</h3>
+                <p>\(\beta\) 值決定了產品是「早夭」、「隨機失效」還是「磨耗」。</p>
+                <p>樣本少時，隨便一顆異常值（Outlier）都會讓直線斜率劇烈波動，導致你誤判失效模式（例如把磨耗誤判為隨機失效），進而選錯改善方向。</p>
+            </div>
+
+            <h3>如果預算/時間有限，樣本很少怎麼辦？(Mouldex 實務建議)</h3>
+            <p>在模具或高單價產品分析中，往往不可能測 20 顆。這時有幾種策略：</p>
+
+            <div class="calculation-example" style="background-color: #e1f5fe; border-color: #4fc3f7;">
+                <h3>策略一：使用「Weibayes 分析」(1參數 Weibull)</h3>
+                <p>如果你只有很少的樣本（例如 2-3 顆），甚至沒有失效（全都是 Suspended），但你有過去類似產品的經驗。</p>
+                <p><strong>方法：</strong>固定 \(\beta\) 值（根據歷史經驗，例如金屬疲勞通常 \(\beta \approx 3\)），只計算 \(\eta\)。</p>
+                <p><strong>優點：</strong>需要的樣本數極少，且結果比標準 Weibull 更可信（因為利用了歷史知識）。</p>
+            </div>
+
+            <div class="calculation-example" style="background-color: #f3e5f5; border-color: #ba68c8;">
+                <h3>策略二：增加「設限數據」(Suspended Data)</h3>
+                <p><strong>方法：</strong>你可以只測到 2-3 顆失效，但同時放入 10 顆樣品一起跑。當前 3 顆失效後，停止測試。</p>
+                <p><strong>原因：</strong>那 7 顆未失效的數據（右設限）雖然沒壞，但它們提供了「這段時間內沒壞」的資訊，這能顯著提升分析的準確度，比只測 3 顆全部測到壞要好得多。</p>
+            </div>
+
+            <h3>總結建議</h3>
+            <p>對於 <strong>Mouldex 的應用場景</strong>：</p>
+            <ul>
+                <li><strong>理想情況：</strong>盡量爭取 <strong class="highlight-text">10 顆以上</strong>的樣本。</li>
+                <li><strong>最低底線：</strong>至少要有 <strong class="highlight-text">5-6 顆</strong>。</li>
+                <li><strong>測試策略：</strong>如果只能測到少數幾顆壞掉，請務必保留那些「還沒壞」的數據作為<strong>右設限 (Suspended)</strong>
+                    輸入到我們剛做好的網頁工具中，這樣能大幅提升準確度。</li>
+            </ul>
+
+            <h2>6. 如何取得參數 (\(\beta, \eta\))</h2>
+            <p>在實際工程中，我們不會手算參數，通常使用圖解法或軟體（如上方計算機）：</p>
+
+            <h3>圖解法 (Excel 原理)</h3>
+            <p>利用 Weibull 線性化公式製作散佈圖：</p>
+            <div class="formula-box">
+                $$ \ln(-\ln(1 - F(t))) = \beta \ln(t) - \beta \ln(\eta) $$
+            </div>
+            <p>在圖表中，趨勢線的<strong>斜率即為 \(\beta\)</strong>。</p>
+
+        </div>
+        <!-- 理論區結束 -->
+
+    </div>
+
+    <footer style="text-align: center; margin-top: 30px; font-size: 0.9em; color: #777;">
+        <p>Generated for Mouldex Weibull Analysis</p>
+    </footer>
+
+    <!-- 批次輸入彈出視窗 -->
+    <div id="batchModal" class="batch-modal">
+        <div class="batch-modal-content">
+            <div class="batch-modal-header">📋 批次輸入數據</div>
+            <div class="batch-help">
+                <strong>使用說明：</strong><br>
+                • 從 Excel 或 CSV 複製數據，直接貼上到下方文字框<br>
+                • 格式：每行一筆數據，用 Tab、逗號或空格分隔<br>
+                • 第一欄：壽命 (t)，第二欄：狀態 (F=失效, S=右設限)<br>
+                • 範例：<code>100 F</code> 或 <code>200,S</code> 或 <code>300	F</code>
+            </div>
+            <textarea id="batchTextarea" class="batch-textarea" placeholder="請貼上數據，例如：&#10;100 F&#10;150 F&#10;200 S&#10;250 F"></textarea>
+            <div class="batch-buttons">
+                <button class="btn-add" onclick="processBatchInput()">✓ 確認加入</button>
+                <button class="btn-clear" onclick="closeBatchInput()">✗ 取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- JavaScript 邏輯 (計算與繪圖) -->
+    <!-- ========================================= -->
+        <script>
+        let data = [];
+        let chartProb = null;
+        let chartRel = null;
+        let analysisResults = null; // 儲存分析結果
+
+        window.onload = function () {
+            const tInput = document.getElementById("tInput");
+            const sInput = document.getElementById("sInput");
+            tInput.addEventListener("keydown", function (event) {
+                if (event.key === "Enter") { event.preventDefault(); addData(); }
+            });
+            sInput.addEventListener("keydown", function (event) {
+                if (event.key === "Enter") { event.preventDefault(); addData(); }
+            });
+            tInput.focus();
+        };
+
+        function addData() {
+            const tInput = document.getElementById('tInput');
+            const t = parseFloat(tInput.value);
+            const s = document.getElementById('sInput').value;
+            if (isNaN(t) || t <= 0) {
+                if (tInput.value !== "") alert("請輸入大於 0 的有效時間");
+                return;
+            }
+            data.push({ t: t, s: s });
+            sortDataArray();
+            updateTable();
+            tInput.value = '';
+            tInput.focus();
+        }
+
+        function showBatchInput() {
+            document.getElementById('batchModal').style.display = 'block';
+            document.getElementById('batchTextarea').value = '';
+            document.getElementById('batchTextarea').focus();
+        }
+
+        function closeBatchInput() {
+            document.getElementById('batchModal').style.display = 'none';
+        }
+
+        function processBatchInput() {
+            const textarea = document.getElementById('batchTextarea');
+            const text = textarea.value.trim();
+            
+            if (!text) {
+                alert("請輸入數據！");
+                return;
+            }
+
+            const lines = text.split('\n');
+            let successCount = 0;
+            let errorCount = 0;
+            const errors = [];
+
+            lines.forEach((line, index) => {
+                line = line.trim();
+                if (!line) return; // 跳過空行
+
+                // 支援多種分隔符：Tab、逗號、空格
+                const parts = line.split(/[\t,\s]+/);
+                
+                if (parts.length < 2) {
+                    errors.push(`第 ${index + 1} 行：格式錯誤（需要兩欄數據）`);
+                    errorCount++;
+                    return;
+                }
+
+                const t = parseFloat(parts[0]);
+                let s = parts[1].toUpperCase();
+
+                // 驗證數據
+                if (isNaN(t) || t <= 0) {
+                    errors.push(`第 ${index + 1} 行：壽命必須是大於 0 的數字`);
+                    errorCount++;
+                    return;
+                }
+
+                if (s !== 'F' && s !== 'S') {
+                    errors.push(`第 ${index + 1} 行：狀態必須是 F 或 S`);
+                    errorCount++;
+                    return;
+                }
+
+                // 加入數據
+                data.push({ t: t, s: s });
+                successCount++;
+            });
+
+            // 更新表格
+            if (successCount > 0) {
+                sortDataArray();
+                updateTable();
+            }
+
+            // 顯示結果
+            closeBatchInput();
+            
+            if (errorCount > 0) {
+                alert('✅ 成功加入 ' + successCount + ' 筆數據\n❌ ' + errorCount + ' 筆數據有誤：\n\n' + errors.slice(0, 5).join('\n') + (errors.length > 5 ? '\n...(更多錯誤)' : ''));
+            } else {
+                alert(`✅ 成功加入 ${successCount} 筆數據！`);
+            }
+        }
+
+        // 點擊彈出視窗外部關閉
+        window.onclick = function(event) {
+            const modal = document.getElementById('batchModal');
+            if (event.target === modal) {
+                closeBatchInput();
+            }
+        }
+
+        function loadDemo() {
+            data = [
+                { t: 300, s: 'F' }, { t: 100, s: 'F' }, { t: 250, s: 'S' },
+                { t: 150, s: 'F' }, { t: 550, s: 'F' }, { t: 120, s: 'S' },
+                { t: 400, s: 'F' }, { t: 200, s: 'F' }
+            ];
+            sortDataArray();
+            updateTable();
+            runAnalysis();
+        }
+
+        function sortDataArray() {
+            data.sort((a, b) => {
+                if (a.t !== b.t) return a.t - b.t;
+                return (a.s === 'F' ? -1 : 1);
+            });
+        }
+
+        function clearData() {
+            data = [];
+            updateTable();
+            document.getElementById('resultPanel').style.display = 'none';
+            if (chartProb) chartProb.destroy();
+            if (chartRel) chartRel.destroy();
+            document.getElementById('tInput').focus();
+        }
+
+        function deleteRow(idx) {
+            data.splice(idx, 1);
+            updateTable();
+        }
+
+        function updateTable() {
+            const tbody = document.querySelector('#dataTable tbody');
+            tbody.innerHTML = '';
+            data.forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                <td style="color:#aaa;">${idx + 1}</td>
+                <td style="font-weight:bold;">${item.t}</td>
+                <td style="color:${item.s === 'F' ? '#e74c3c' : '#2980b9'}; font-weight:bold;">
+                    ${item.s === 'F' ? '失效 (F)' : '設限 (S)'}
+                </td>
+                <td><button class="btn-del" onclick="deleteRow(${idx})">X</button></td>
+            `;
+                tbody.appendChild(tr);
+            });
+            const container = document.querySelector('.table-container');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function runAnalysis() {
+            sortDataArray();
+            if (data.filter(d => d.s === 'F').length < 2) {
+                alert("錯誤：至少需要 2 個失效數據 (Failure) 才能計算參數。");
+                return;
+            }
+            const N = data.length;
+            let points = [];
+            let previousOrderNumber = 0;
+            for (let i = 0; i < N; i++) {
+                let item = data[i];
+                let reverseRank = N - i;
+                let increment = ((N + 1) - previousOrderNumber) / reverseRank;
+                let newOrderNumber = previousOrderNumber + increment;
+                if (item.s === 'F') {
+                    let medianRank = (newOrderNumber - 0.3) / (N + 0.4);
+                    if (medianRank >= 0.99999) medianRank = 0.99999;
+                    let x = Math.log(item.t);
+                    let term = -Math.log(1 - medianRank);
+                    let y = Math.log(term);
+                    if (isFinite(x) && isFinite(y)) {
+                        points.push({ x: x, y: y });
+                    }
+                }
+                previousOrderNumber = newOrderNumber;
+            }
+            if (points.length < 2) {
+                alert("有效數據點不足，無法擬合。");
+                return;
+            }
+            let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+            let nP = points.length;
+            points.forEach(p => {
+                sumX += p.x; sumY += p.y;
+                sumXY += (p.x * p.y); sumXX += (p.x * p.x);
+            });
+            let slope = (nP * sumXY - sumX * sumY) / (nP * sumXX - sumX * sumX);
+            let intercept = (sumY - slope * sumX) / nP;
+            let beta = slope;
+            let eta = Math.exp(-intercept / beta);
+            let yMean = sumY / nP;
+            let ssTot = points.reduce((acc, p) => acc + Math.pow(p.y - yMean, 2), 0);
+            let ssRes = points.reduce((acc, p) => acc + Math.pow(p.y - (slope * p.x + intercept), 2), 0);
+            let r2 = 1 - (ssRes / ssTot);
+
+            document.getElementById('resultPanel').style.display = 'block';
+            document.getElementById('valBeta').innerText = beta.toFixed(4);
+            document.getElementById('valEta').innerText = eta.toFixed(2);
+            document.getElementById('valR2').innerText = r2.toFixed(4);
+
+            let typeText = "";
+            if (beta < 1) typeText = "早期失效 (Infant Mortality)";
+            else if (beta < 1.1) typeText = "隨機失效 (Constant Failure Rate)";
+            else typeText = "磨耗失效 (Wear-out)";
+            document.getElementById('descText').innerText = `失效模式判定: ${typeText}`;
+
+            // 儲存分析結果供匯出使用
+            analysisResults = {
+                beta: beta,
+                eta: eta,
+                r2: r2,
+                failureMode: typeText,
+                points: points
+            };
+
+            drawCharts(points, slope, intercept, beta, eta, data[N - 1].t);
+        }
+
+        // 數據匯出功能
+        function exportData() {
+            if (!analysisResults) {
+                alert("請先執行「開始計算與繪圖」以產生分析結果！");
+                return;
+            }
+
+            let csvContent = "Weibull 可靠度分析結果\n\n";
+
+            // 分析參數
+            csvContent += "=== 分析參數 ===\n";
+            csvContent += "參數名稱,數值\n";
+            csvContent += `形狀參數 Beta (β),${analysisResults.beta.toFixed(4)}\n`;
+            csvContent += `特徵壽命 Eta (η),${analysisResults.eta.toFixed(2)}\n`;
+            csvContent += `擬合度 R²,${analysisResults.r2.toFixed(4)}\n`;
+            csvContent += `失效模式,${analysisResults.failureMode}\n\n`;
+
+            // 原始數據
+            csvContent += "=== 原始數據 ===\n";
+            csvContent += "序號,壽命 (t),狀態(F:失效/S:右設限) \n";
+            data.forEach((item, idx) => {
+                csvContent += `${idx + 1},${item.t},${item.s}\n`;
+            });
+
+            // Weibull Probability Plot 數據（失效數據點）
+            csvContent += "\n=== Weibull Probability Plot 數據 ===\n";
+            csvContent += "壽命 (t),ln(t),ln(-ln(1-F(t))),中位秩 F(t)\n";
+            analysisResults.points.forEach(point => {
+                const t = Math.exp(point.x);
+                const F = 1 - Math.exp(-Math.exp(point.y));
+                csvContent += `${t.toFixed(2)},${point.x.toFixed(4)},${point.y.toFixed(4)},${(F * 100).toFixed(2)}%\n`;
+            });
+
+            // Weibull 趨勢線數據（100 個點）
+            csvContent += "\n=== Weibull 趨勢線數據 ===\n";
+            csvContent += "ln(t),ln(-ln(1-F(t)))\n";
+            const minX = Math.min(...analysisResults.points.map(p => p.x));
+            const maxX = Math.max(...analysisResults.points.map(p => p.x));
+            const slope = analysisResults.beta;
+            const intercept = -slope * Math.log(analysisResults.eta);
+            for (let i = 0; i <= 100; i++) {
+                const x = minX + (maxX - minX) * i / 100;
+                const y = slope * x + intercept;
+                csvContent += `${x.toFixed(4)},${y.toFixed(4)}\n`;
+            }
+
+            // 可靠度曲線數據（200 個點）
+            const maxT = data[data.length - 1].t * 1.5;
+            csvContent += "\n=== 可靠度曲線數據 ===\n";
+            csvContent += "壽命 (t),可靠度 R(t) (%),失效率 F(t) (%)\n";
+            for (let i = 0; i <= 200; i++) {
+                const t = maxT * i / 200;
+                const R = Math.exp(-Math.pow(t / analysisResults.eta, analysisResults.beta)) * 100;
+                const F = 100 - R;
+                csvContent += `${t.toFixed(2)},${R.toFixed(4)},${F.toFixed(4)}\n`;
+            }
+
+            // 關鍵可靠度數據表（每 5% 間隔）
+            csvContent += "\n=== 關鍵可靠度數據表 ===\n";
+            csvContent += "可靠度 R(t) (%),時間 (t),失效率 F(t) (%)\n";
+            for (let r = 100; r >= 5; r -= 5) {
+                const t = analysisResults.eta * Math.pow(-Math.log(r / 100), 1 / analysisResults.beta);
+                const F = 100 - r;
+                csvContent += `${r},${t.toFixed(2)},${F}\n`;
+            }
+
+            // B-Life 數據（B1, B5, B10, B20, B50）
+            csvContent += "\n=== B-Life 數據 ===\n";
+            csvContent += "B-Life,時間 (t),說明\n";
+            const bLifeValues = [1, 5, 10, 20, 50];
+            bLifeValues.forEach(b => {
+                const R = (100 - b) / 100;
+                const t = analysisResults.eta * Math.pow(-Math.log(R), 1 / analysisResults.beta);
+                csvContent += `B${b},${t.toFixed(2)},${b}% 產品失效時的壽命\n`;
+            });
+
+            // 下載 CSV
+            const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Weibull_完整分析數據_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            alert("✅ 完整數據已成功匯出為 CSV 檔案！\n包含：\n- 分析參數\n- 原始數據\n- Weibull Probability Plot (失效點 + 趨勢線 100 點)\n- 可靠度曲線 (200 點)\n- 關鍵可靠度表 (每 5%)\n- B-Life 數據");
+        }
+
+        // 圖表匯出功能（超高解析度）
+        function exportCharts() {
+            if (!chartProb || !chartRel) {
+                alert("請先執行「開始計算與繪圖」以產生圖表！");
+                return;
+            }
+
+            // 匯出 Weibull Probability Plot
+            exportChartAsHighResImage(chartProb, 'Weibull_Probability_Plot');
+
+            // 延遲 500ms 後匯出第二張圖
+            setTimeout(() => {
+                exportChartAsHighResImage(chartRel, 'Weibull_可靠度曲線');
+                alert("✅ 兩張圖表已成功匯出為高品質 PNG 檔案（960×720 @ 4K DPI）！");
+            }, 500);
+        }
+
+        // 將圖表匯出為高品質 PNG（960×720 @ 4K DPI）
+        function exportChartAsHighResImage(chart, filename) {
+            // 目標尺寸：960×720，但使用 4 倍 DPI 達到 4K 品質
+            const displayWidth = 960;
+            const displayHeight = 720;
+            const dpiScale = 4; // 4K 品質的 DPI 倍數
+
+            // 實際 canvas 尺寸（3840×2160，即 4K）
+            const actualWidth = displayWidth * dpiScale;
+            const actualHeight = displayHeight * dpiScale;
+
+            // 建立臨時容器
+            const tempContainer = document.createElement('div');
+            tempContainer.style.cssText = `position:absolute;left:-9999px;width:${displayWidth}px;height:${displayHeight}px;`;
+            document.body.appendChild(tempContainer);
+
+            // 建立高解析度 Canvas
+            const highResCanvas = document.createElement('canvas');
+            highResCanvas.width = actualWidth;
+            highResCanvas.height = actualHeight;
+            highResCanvas.style.width = displayWidth + 'px';
+            highResCanvas.style.height = displayHeight + 'px';
+            tempContainer.appendChild(highResCanvas);
+
+            // 取得 2D 上下文（允許透明，稍後手動填充白色）
+            const ctx = highResCanvas.getContext('2d');
+
+            // 先繪製白色背景（在 scale 之前，使用實際尺寸）
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, actualWidth, actualHeight);
+
+            // 然後再進行縮放
+            ctx.scale(dpiScale, dpiScale);
+
+            // 深度複製圖表配置
+            const chartData = JSON.parse(JSON.stringify(chart.config.data));
+            const chartOptions = JSON.parse(JSON.stringify(chart.config.options));
+
+            // 確保圖表選項中設定白色背景
+            if (!chartOptions.plugins) chartOptions.plugins = {};
+            if (!chartOptions.plugins.legend) chartOptions.plugins.legend = {};
+            chartOptions.plugins.legend.labels = chartOptions.plugins.legend.labels || {};
+            chartOptions.plugins.legend.labels.color = '#000000';
+
+            // 在高解析度 canvas 上重新渲染圖表
+            const tempChart = new Chart(ctx, {
+                type: chart.config.type,
+                data: chartData,
+                options: chartOptions,
+                plugins: [{
+                    id: 'customCanvasBackgroundColor',
+                    beforeDraw: (chart) => {
+                        const ctx = chart.canvas.getContext('2d');
+                        ctx.save();
+                        ctx.globalCompositeOperation = 'destination-over';
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, chart.width, chart.height);
+                        ctx.restore();
+                    }
+                }, ...(chart.config.plugins || [])]
+            });
+
+            // 等待渲染完成後下載
+            setTimeout(() => {
+                highResCanvas.toBlob((blob) => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `${filename}_${new Date().toISOString().slice(0, 10)}.png`;
+                    link.click();
+
+                    // 清理
+                    tempChart.destroy();
+                    document.body.removeChild(tempContainer);
+                }, 'image/png', 1.0);
+            }, 150);
+        }
+
+        // 產生報告功能（截取虛線上方區域，含邊界，超高解析度）
+        async function generateReport() {
+            if (!analysisResults) {
+                alert("請先執行「開始計算與繪圖」以產生分析結果！");
+                return;
+            }
+
+            const reportArea = document.getElementById('reportArea');
+            const loadingMsg = document.createElement('div');
+            loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:white;padding:20px 40px;border-radius:8px;font-size:1.2em;z-index:9999;';
+            loadingMsg.textContent = '正在生成報告，請稍候...';
+            document.body.appendChild(loadingMsg);
+
+            try {
+                // 使用 html2canvas 截取報告區域（6 倍解析度以確保圖表清晰）
+                const scale = 6;
+                const originalCanvas = await html2canvas(reportArea, {
+                    scale: scale,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    windowWidth: reportArea.scrollWidth,
+                    windowHeight: reportArea.scrollHeight,
+                    onclone: (clonedDoc) => {
+                        // 優化 canvas 讀取效能
+                        const canvases = clonedDoc.querySelectorAll('canvas');
+                        canvases.forEach(canvas => {
+                            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                        });
+                    }
+                });
+
+                // 建立新的 canvas，增加 40px 邊界（與 container padding 相同）
+                const padding = 40 * scale;
+                const newCanvas = document.createElement('canvas');
+                newCanvas.width = originalCanvas.width + padding * 2;
+                newCanvas.height = originalCanvas.height + padding * 2;
+                const ctx = newCanvas.getContext('2d', {
+                    alpha: false,
+                    willReadFrequently: false
+                });
+
+                // 設定高品質渲染
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+
+                // 填充白色背景
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+
+                // 將原始截圖繪製到中央（留出邊界）
+                ctx.drawImage(originalCanvas, padding, padding);
+
+                // 下載圖片
+                newCanvas.toBlob((blob) => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                    link.download = `Weibull_分析報告_${timestamp}.png`;
+                    link.click();
+                    document.body.removeChild(loadingMsg);
+                    alert(`✅ 報告已成功生成！\n解析度: ${newCanvas.width} × ${newCanvas.height} px`);
+                }, 'image/png', 1.0);
+            } catch (error) {
+                document.body.removeChild(loadingMsg);
+                alert("❌ 報告生成失敗：" + error.message);
+                console.error(error);
+            }
+        }
+
+        function drawCharts(points, slope, intercept, beta, eta, maxT) {
+            // 白色背景插件
+            const whiteBackgroundPlugin = {
+                id: 'customCanvasBackgroundColor',
+                beforeDraw: (chart) => {
+                    const { ctx, width, height } = chart;
+                    ctx.save();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, width, height);
+                    ctx.restore();
+                }
+            };
+
+            const ctx1 = document.getElementById('chartProb').getContext('2d');
+            if (chartProb) chartProb.destroy();
+            let minX = Math.min(...points.map(p => p.x));
+            let maxX = Math.max(...points.map(p => p.x));
+            let linePts = [
+                { x: minX - 0.5, y: slope * (minX - 0.5) + intercept },
+                { x: maxX + 0.5, y: slope * (maxX + 0.5) + intercept }
+            ];
+            chartProb = new Chart(ctx1, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        { label: '失效數據點', data: points, backgroundColor: '#e74c3c', pointRadius: 6 },
+                        { label: 'Weibull 趨勢線', data: linePts, showLine: true, borderColor: '#2980b9', borderWidth: 2, pointRadius: 0, fill: false, type: 'line' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    aspectRatio: 16 / 9,
+                    plugins: { title: { display: true, text: 'Weibull Probability Plot', font: { size: 16 } }, tooltip: { callbacks: { label: (ctx) => `時間: ${Math.exp(ctx.raw.x).toFixed(1)}` } } },
+                    scales: { x: { title: { display: true, text: 'ln(t)' } }, y: { title: { display: true, text: 'ln(-ln(1-F(t)))' } } }
+                },
+                plugins: [whiteBackgroundPlugin]
+            });
+
+            const ctx2 = document.getElementById('chartRel').getContext('2d');
+            if (chartRel) chartRel.destroy();
+
+            let relPoints = [];
+            let plotMax = maxT * 1.5;
+            let step = plotMax / 2000;
+
+            for (let t = 0; t <= plotMax; t += step) {
+                let R = Math.exp(-Math.pow(t / eta, beta));
+                relPoints.push({ x: t, y: R * 100 });
+            }
+
+            // 計算使用者設定的 R(t) 值對應的時間點
+            let rValue = parseFloat(document.getElementById('rValue').value) || 95;
+            rValue = Math.max(1, Math.min(99.9, rValue)); // 限制在 1-99.9% 之間
+            let R = rValue / 100;
+            
+            // R(t) = e^(-(t/η)^β) = R
+            // -(t/η)^β = ln(R)
+            // (t/η)^β = -ln(R)
+            // t = η × (-ln(R))^(1/β)
+            let tR = eta * Math.pow(-Math.log(R), 1 / beta);
+            let rPoint = { x: tR, y: rValue };
+
+            // 取得使用者輸入的圖形標題
+            let chartTitle = document.getElementById('chartTitle').value || '可靠度曲線 (Reliability Curve)';
+
+            // 自訂插件：在圖表上繪製標籤和垂直虛線
+            const labelPlugin = {
+                id: 'customLabel',
+                afterDatasetsDraw: function (chart) {
+                    const ctx = chart.ctx;
+                    const yAxis = chart.scales.y;
+                    const xAxis = chart.scales.x;
+
+                    chart.data.datasets.forEach((dataset, i) => {
+                        if (dataset.label.includes('R(t) =') && dataset.data.length > 0) {
+                            const meta = chart.getDatasetMeta(i);
+                            const point = meta.data[0];
+                            const x = point.x;
+                            const y = point.y;
+
+                            // 繪製垂直虛線 (從 R(t)=95% 點到橫軸)
+                            const yBottom = yAxis.getPixelForValue(0);
+                            ctx.save();
+                            ctx.strokeStyle = '#e74c3c';
+                            ctx.lineWidth = 2;
+                            ctx.setLineDash([5, 5]);
+                            ctx.beginPath();
+                            ctx.moveTo(x, y);
+                            ctx.lineTo(x, yBottom);
+                            ctx.stroke();
+                            ctx.restore();
+
+                            // 在 R(t)=95% 點上方繪製標籤
+                            const labelText = `(${rPoint.x.toFixed(2)}, ${rPoint.y.toFixed(1)}%)`;
+                            ctx.font = 'bold 11px Arial';
+                            const textWidth = ctx.measureText(labelText).width;
+                            const padding = 6;
+                            const textHeight = 11; // 字體大小
+                            const lineHeight = textHeight * 1.2; // 行高
+                            const boxHeight = lineHeight + padding * 2; // 框高度
+                            const labelX = x - textWidth / 2;
+                            const labelY = y - 25;
+
+                            ctx.fillStyle = 'rgba(231, 76, 60, 0.9)';
+                            ctx.beginPath();
+                            ctx.roundRect(labelX - padding, labelY - (boxHeight/2), textWidth + padding * 2, boxHeight, 4);
+                            ctx.fill();
+
+                            // 繪製文字
+                            ctx.fillStyle = 'white';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(labelText, x, labelY);
+
+                            // 在橫軸上方繪製 t 值標籤
+                            ctx.save();
+                            const tLabelText = `t=${rPoint.x.toFixed(2)}`;
+                            ctx.font = 'bold 11px Arial';
+                            const tTextWidth = ctx.measureText(tLabelText).width;
+                            const tLabelX = x - tTextWidth / 2;
+                            const tLabelY = yBottom + 15;
+
+                            // 繪製標籤背景
+                            ctx.fillStyle = '#e74c3c';
+                            ctx.beginPath();
+                            ctx.roundRect(tLabelX - padding, tLabelY - (boxHeight/2), tTextWidth + padding * 2, boxHeight, 4);
+                            ctx.fill();
+
+                            // 繪製文字
+                            ctx.fillStyle = 'white';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(tLabelText, x, tLabelY);
+                            ctx.restore();
+                        }
+                    });
+                }
+            };
+
+            chartRel = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: '可靠度 R(t) %',
+                            data: relPoints,
+                            borderColor: '#27ae60',
+                            backgroundColor: 'rgba(39, 174, 96, 0.2)',
+                            fill: true,
+                            pointRadius: 0,
+                            borderWidth: 2
+                        },
+                        {
+                            label: `R(t) = ${rValue}%`,
+                            data: [rPoint],
+                            backgroundColor: '#e74c3c',
+                            borderColor: '#c0392b',
+                            pointRadius: 5,
+                            pointStyle: 'circle',
+                            showLine: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    aspectRatio: 16 / 9,
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    },
+                    plugins: {
+                        title: { display: true, text: chartTitle, font: { size: 16 } },
+                        tooltip: {
+                            callbacks: {
+                                label: (c) => {
+                                    if (c.datasetIndex === 1) {
+                                        return `R(t) = ${rValue}% 於 t = ${c.parsed.x.toFixed(2)}`;
+                                    }
+                                    return `${c.parsed.y.toFixed(2)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { type: 'linear', title: { display: true, text: '壽命 (t)' } },
+                        y: { min: 0, max: 100, title: { display: true, text: '可靠度 (%)' } }
+                    }
+                },
+                plugins: [labelPlugin]
+            });
+        }
+    </script>
+
+        <!-- 理論指南：彈窗版本（與雙組版一致） -->
+        <div id="theoryModal" class="batch-modal">
+            <div class="batch-modal-content" style="max-width: 900px;">
+                <div class="batch-modal-header">📘 Weibull 分析理論指南</div>
+                <div style="max-height: 70vh; overflow-y: auto;">
+                    <h2>1. 數據類型：失效與右設限</h2>
+                    <p>失效數據 (F)：樣品於測試期間發生失效。右設限數據 (S)：測試結束時仍正常運作，只知至少存活到該時間。</p>
+                    <div style="background:#e8f6f3; border:1px solid #a2d9ce; border-radius:5px; padding:12px; margin:10px 0;">
+                        <h3 style="margin:0 0 8px 0; color:#2c3e50;">為什麼會有右設限數據？</h3>
+                        <ul style="margin:0 0 0 18px;">
+                            <li>測試時間限制：例如 500 小時結束仍未失效 → 記錄為 500, S</li>
+                            <li>樣品移除：測試中途因非失效原因移除樣品</li>
+                            <li>成本考量：長時間測試成本高，無法等待全部失效</li>
+                        </ul>
+                    </div>
+
+                    <h2>1.5 可靠度與不可靠度的關係</h2>
+                    <p>在工程實務中，產品的狀態是一體兩面的：不是「存活」就是「已失效」。因此我們定義了互補的兩個指標：</p>
+                    <ul>
+                        <li><strong>\(R(t)\) 可靠度 (Reliability)</strong>：<br>通俗名稱：<strong class="highlight-text">存活率 (Survival Rate)</strong><br>定義：代表產品運作到時間 \(t\) <strong>仍未損壞</strong>的機率。</li>
+                        <li style="margin-top: 10px;"><strong>\(F(t)\) 不可靠度 (Unreliability)</strong>：<br>通俗名稱：<strong class="highlight-text">累積失效機率 (Cumulative Probability of Failure)</strong><br>定義：代表產品從開始運作直到時間 \(t\) <strong>已經損壞</strong>的總比例（即 CDF）。</li>
+                    </ul>
+                    <div class="formula-box">
+                        $$ R(t) + F(t) = 1 $$
+                        <p style="font-size: 0.8em; color: #555; margin-top: 5px;">(存活率) + (累積失效機率) = 100%</p>
+                    </div>
+
+                    <h2>2. 核心公式</h2>
+                    <div style="text-align:center; padding:10px; background:#f0f4f8; border:1px solid #dce4ec; border-radius:5px; margin:10px 0;">
+                        $$ R(t) = e^{-(t/\eta)^{\beta}} $$
+                    </div>
+                    <ul>
+                        <li>t：壽命或循環次數</li>
+                        <li>R(t)：在時間 t 尚未失效的機率</li>
+                        <li>\(\beta\) (Beta)：形狀參數</li>
+                        <li>\(\eta\) (Eta)：尺度參數、特徵壽命</li>
+                    </ul>
+
+                    <h2>3. 理解關鍵參數</h2>
+                    <h3>\(\beta\) 的工程意義</h3>
+                    <ul>
+                        <li>\(\beta < 1\)：早期失效 (Infant Mortality)</li>
+                        <li>\(\beta \approx 1\)：隨機失效 (Constant Failure Rate)</li>
+                        <li>\(\beta > 1\)：磨耗失效 (Wear‑out)</li>
+                    </ul>
+                    <h3>\(\eta\) 的工程意義</h3>
+                    <p>當 \(63.2\%\) 的樣品失效時的時間點，衡量整體壽命長短。</p>
+                    <h3>\(R^2\) 擬合度</h3>
+                    <ul>
+                        <li>\(R^2 \ge 0.95\)：擬合優秀</li>
+                        <li>\(0.90 \le R^2 < 0.95\)：擬合良好</li>
+                        <li>\(0.80 \le R^2 < 0.90\)：尚可擬合</li>
+                        <li>\(R^2 < 0.80\)：擬合不佳，需檢視數據或模型</li>
+                    </ul>
+
+                    <h2>4. 計算步驟與示例</h2>
+                    <h3>計算特定時間的可靠度</h3>
+                    <div style="text-align:center; padding:10px; background:#f8f9fa; border:1px solid #dee2e6; border-radius:5px; margin:10px 0;">
+                        $$ R(t_0) = e^{-(t_0/\eta)^{\beta}} $$
+                    </div>
+                    <h3>B‑Life 反推</h3>
+                    <div style="text-align:center; padding:10px; background:#fff3cd; border:1px solid #ffc107; border-radius:5px; margin:10px 0;">
+                        $$ t = \eta \times (-\ln(R))^{1/\beta} $$
+                    </div>
+
+                    <h2>5. B‑Life 與工程意義</h2>
+                    <ul>
+                        <li>B1：高安全標準，\(R=99\%\)</li>
+                        <li>B10：行業通用，\(R=90\%\)</li>
+                        <li>B63.2：\(\eta\) 本身</li>
+                    </ul>
+                    <table style="width:100%; border-collapse:collapse; margin:12px 0;">
+                        <thead>
+                            <tr style="background:#34495e; color:#fff;">
+                                <th style="padding:8px; border:1px solid #ddd;">指標</th>
+                                <th style="padding:8px; border:1px solid #ddd;">失效比例</th>
+                                <th style="padding:8px; border:1px solid #ddd;">存活率</th>
+                                <th style="padding:8px; border:1px solid #ddd;">工程意義</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="background:#ffebee;">
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">B1</td>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">1%</td>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">99%</td>
+                                <td style="padding:8px; border:1px solid #ddd;">高安全性產品</td>
+                            </tr>
+                            <tr style="background:#e8f5e9;">
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">B10</td>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">10%</td>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">90%</td>
+                                <td style="padding:8px; border:1px solid #ddd;">保固期與壽命評估</td>
+                            </tr>
+                            <tr style="background:#f3e5f5;">
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">B50</td>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">50%</td>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">50%</td>
+                                <td style="padding:8px; border:1px solid #ddd;">中位數壽命</td>
+                            </tr>
+                            <tr style="background:#fff3e0;">
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">B63.2</td>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">63.2%</td>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">36.8%</td>
+                                <td style="padding:8px; border:1px solid #ddd;">特徵壽命 \(\eta\)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h2>6. 樣本數量建議</h2>
+                    <table style="width:100%; border-collapse:collapse; margin:12px 0;">
+                        <thead>
+                            <tr style="background:#34495e; color:#fff;">
+                                <th style="padding:8px; border:1px solid #ddd;">樣本數量</th>
+                                <th style="padding:8px; border:1px solid #ddd;">評價</th>
+                                <th style="padding:8px; border:1px solid #ddd;">適用情境</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">3–5 顆</td>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center; color:#e74c3c;">極低 (高風險)</td>
+                                <td style="padding:8px; border:1px solid #ddd;">昂貴產品或初步測試，僅看趨勢</td>
+                            </tr>
+                            <tr style="background:#f9f9f9;">
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">6–10 顆</td>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center; color:#f39c12;">勉強接受</td>
+                                <td style="padding:8px; border:1px solid #ddd;">開發階段快速驗證</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">10–20 顆</td>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center; color:#27ae60;">工程推薦</td>
+                                <td style="padding:8px; border:1px solid #ddd;">最佳平衡，足以判斷失效模式</td>
+                            </tr>
+                            <tr style="background:#f9f9f9;">
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">20–30 顆+</td>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center; color:#2980b9;">統計顯著</td>
+                                <td style="padding:8px; border:1px solid #ddd;">高可靠度要求或低成本元件</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h2>9. 圖解法線性化</h2>
+                    <div style="text-align:center; padding:10px; background:#e3f2fd; border:1px solid #2196f3; border-radius:5px; margin:10px 0;">
+                        $$ \ln(-\ln(1 - F(t))) = \beta \ln(t) - \beta \ln(\eta) $$
+                    </div>
+                    <p>散點趨勢線斜率為 \(\beta\)，截距決定 \(\eta\)。</p>
+
+                    <h2>7. 為什麼需要較多樣本？</h2>
+                    <div style="background:#e8f5e9; border:1px solid #81c784; border-radius:5px; padding:12px; margin:10px 0;">
+                        <h3 style="margin:0 0 8px 0;">A. 信賴區間的寬度</h3>
+                        <p>樣本越少，不確定性越高。5 顆樣品的 B10 信賴區間可能非常寬；20 顆則明顯收斂。</p>
+                    </div>
+                    <div style="background:#fff3e0; border:1px solid #ffb74d; border-radius:5px; padding:12px; margin:10px 0;">
+                        <h3 style="margin:0 0 8px 0;">B. 早期失效尾端的敏感度</h3>
+                        <p>B1/B10 屬於分佈尾端，對少量異常值極為敏感，需較多樣本穩定估計。</p>
+                    </div>
+                    <div style="background:#fce4ec; border:1px solid #f48fb1; border-radius:5px; padding:12px; margin:10px 0;">
+                        <h3 style="margin:0 0 8px 0;">C. 確認失效模式 (\(\beta\) 值)</h3>
+                        <p>樣本太少時，斜率容易受單點影響而誤判失效型態，導致錯誤改善方向。</p>
+                    </div>
+
+                    <h2>8. 實務策略</h2>
+                    <div style="background:#e1f5fe; border:1px solid #4fc3f7; border-radius:5px; padding:12px; margin:10px 0;">
+                        <h3 style="margin:0 0 8px 0;">策略一：Weibayes (1 參數 Weibull)</h3>
+                        <p>樣本極少或多為設限時，依歷史經驗固定 \(\beta\)，僅估 \(\eta\)。</p>
+                    </div>
+                    <div style="background:#f3e5f5; border:1px solid #ba68c8; border-radius:5px; padding:12px; margin:10px 0;">
+                        <h3 style="margin:0 0 8px 0;">策略二：增加設限數據</h3>
+                        <p>少量失效搭配更多設限樣本，可顯著提升擬合穩定度。</p>
+                    </div>
+
+                    <h2>10. 實務總結</h2>
+                    <ul>
+                        <li>至少蒐集 10 顆以上樣本，並保留設限數據</li>
+                        <li>同時檢視 \(\beta\)、\(\eta\)、\(R^2\) 三者以判讀失效型態與壽命</li>
+                        <li>以 B‑Life 指標溝通工程與商務（保固、壽命、改善幅度）</li>
+                    </ul>
+
+                    <h2>11. 差異分析的理論補充（雙組比較）</h2>
+                    <h3>\(\beta\) 差異的意義</h3>
+                    <ul>
+                        <li>\(\beta_B > \beta_A\)：B 組失效率隨時間上升更快，屬磨耗加劇，尾端失效更集中</li>
+                        <li>\(\beta_B \approx \beta_A\)：兩組失效型態相近，適合用 \(\eta\) 或 B‑Life 直接比較壽命</li>
+                        <li>\(\beta_B < \beta_A\)：B 組較傾向早期失效，需檢討製程／品質一致性</li>
+                    </ul>
+                    <h3>\(\eta\) 改善率的判讀</h3>
+                    <div style="text-align:center; padding:10px; background:#f8f9fa; border:1px solid #dee2e6; border-radius:5px; margin:10px 0;">
+                        $$ \text{\% 改善} = \left(\frac{\eta_B}{\eta_A} - 1\right) \times 100\% $$
+                    </div>
+                    <ul>
+                        <li>適用情境：\(|\beta_B - \beta_A| \le 0.2\)（失效型態近似）</li>
+                        <li>解讀：\(\eta_B/\eta_A = 1.30\) 表示壽命延長約 30%</li>
+                    </ul>
+                    <h3>當 \(\beta\) 不同時的比較方式</h3>
+                    <ul>
+                        <li>固定可靠度比較：選定 \(R\)（如 95%、90%），比較兩組的 \(t(R)\)</li>
+                    </ul>
+                    <div style="text-align:center; padding:10px; background:#fff3cd; border:1px solid #ffc107; border-radius:5px; margin:10px 0;">
+                        $$ t(R) = \eta \times \big(-\ln(R)\big)^{1/\beta} $$
+                    </div>
+                    <ul>
+                        <li>B‑Life 比較：以 \(B10\)、\(B50\) 或 \(B1\) 為指標，比較 \(t_{B,\,x} / t_{A,\,x}\)</li>
+                        <li>優點：避免僅以 \(\eta\) 判斷而忽略 \(\beta\) 對尾端的影響</li>
+                    </ul>
+                    <h3>判讀範例（文字化）</h3>
+                    <div style="background:#e8f6f3; border:1px solid #a2d9ce; border-radius:5px; padding:12px; margin:10px 0;">
+                        <p>例一（型態相近）：\(\beta_A = 1.2,\ \eta_A = 500;\ \beta_B = 1.2,\ \eta_B = 650\)。則 \(\eta\) 改善 ≈ 30%，B10 比較亦約 30% 提升。</p>
+                        <p>例二（型態不同）：\(\beta_A = 1.0,\ \eta_A = 520;\ \beta_B = 1.6,\ \eta_B = 650\)。以 \(R=90\%\) 比較：計算 \(t_A(0.9)\) 與 \(t_B(0.9)\)；若 \(t_B/t_A > 1\)，表示在該可靠度下 B 組更耐久。</p>
+                    </div>
+                    <h3>判讀優先順序</h3>
+                    <table style="width:100%; border-collapse:collapse; margin:12px 0;">
+                        <thead>
+                            <tr style="background:#34495e; color:#fff;">
+                                <th style="padding:8px; border:1px solid #ddd;">步驟</th>
+                                <th style="padding:8px; border:1px solid #ddd;">判讀要點</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">1</td>
+                                <td style="padding:8px; border:1px solid #ddd;">先比較 \(\beta\)（失效型態）是否近似</td>
+                            </tr>
+                            <tr style="background:#f9f9f9;">
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">2</td>
+                                <td style="padding:8px; border:1px solid #ddd;">型態近似時用 \(\eta\) 或 B‑Life 直接比較</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px; border:1px solid #ddd; text-align:center;">3</td>
+                                <td style="padding:8px; border:1px solid #ddd;">型態不同時用固定 \(R\) 或 B‑Life 比較</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="batch-buttons" style="grid-template-columns: 1fr;">
+                        <button class="btn-clear" onclick="closeTheory()">關閉</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function openTheory() {
+                document.getElementById('theoryModal').style.display = 'block';
+            }
+
+            function closeTheory() {
+                document.getElementById('theoryModal').style.display = 'none';
+            }
+
+            document.addEventListener('click', function (event) {
+                const modal = document.getElementById('theoryModal');
+                if (event.target === modal) { closeTheory(); }
+            });
+        </script>
+
+</body>
+
+</html>
