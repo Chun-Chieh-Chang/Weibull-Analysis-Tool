@@ -232,17 +232,42 @@ function displayUIResults(resA, resB) {
  * 視覺化同步中心 (Fixing Alignment)
  */
 function drawAnalytics(resA, resB) {
-    const colA = '#0ea5e9', colB = '#f43f5e';
+    const isDark = !document.body.classList.contains('light-mode');
+    const colA = isDark ? '#38bdf8' : '#0ea5e9';
+    const colB = isDark ? '#fb7185' : '#f43f5e';
+    const textColor = isDark ? '#f1f5f9' : '#0f172a';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : '#f1f5f9';
+    const lineColor = isDark ? 'rgba(255, 255, 255, 0.2)' : '#e2e8f0';
+    const bgColor = 'rgba(0,0,0,0)';
 
-    // 共享佈局參數 - 確保 X 座標物理位置與間距完全一致
     const sharedLayout = {
-        font: { family: 'Plus Jakarta Sans, sans-serif', color: '#0f172a' },
-        plot_bgcolor: '#ffffff',
+        font: { family: 'Inter, system-ui, sans-serif', color: textColor },
+        plot_bgcolor: bgColor,
+        paper_bgcolor: bgColor,
         margin: { l: 80, r: 40, t: 30, b: 80 },
         showlegend: true,
-        legend: { x: 0.05, y: 0.95, bgcolor: 'rgba(255,255,255,0.8)', bordercolor: '#e2e8f0', borderwidth: 1 },
-        xaxis: { gridcolor: '#f1f5f9', linecolor: '#e2e8f0', title: { font: { size: 12, weight: 600 } } },
-        yaxis: { gridcolor: '#f1f5f9', linecolor: '#e2e8f0', title: { font: { size: 12, weight: 600 } } }
+        legend: {
+            x: 0.05,
+            y: 0.95,
+            bgcolor: isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255,255,255,0.8)',
+            bordercolor: lineColor,
+            borderwidth: 1,
+            font: { color: textColor }
+        },
+        xaxis: {
+            gridcolor: gridColor,
+            linecolor: lineColor,
+            zerolinecolor: gridColor,
+            title: { font: { size: 12, weight: 600, color: textColor } },
+            tickfont: { color: textColor }
+        },
+        yaxis: {
+            gridcolor: gridColor,
+            linecolor: lineColor,
+            zerolinecolor: gridColor,
+            title: { font: { size: 12, weight: 600, color: textColor } },
+            tickfont: { color: textColor }
+        }
     };
 
     // 1. Prob Plot
@@ -291,7 +316,10 @@ function addTracesToRel(traces, res, name, color) {
         y.push(Rt);
     }
 
-    let fillcolor = color.startsWith('#') ? `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, 0.05)` : color;
+    // Dynamic fill color for theme compatibility
+    const fillcolor = color.startsWith('#')
+        ? `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, 0.1)`
+        : color;
 
     traces.push({
         x, y, mode: 'lines', name: `${name}`,
@@ -348,14 +376,21 @@ function processBatchInput() {
 
 function updateReliabilityMarkers(pct) {
     if (!analysisResults) return;
+    const isDark = !document.body.classList.contains('light-mode');
     const shapes = [], annotations = [];
     ['A', 'B'].forEach(tag => {
         const res = analysisResults[`group${tag}`];
         if (!res) return;
-        const color = tag === 'A' ? '#0ea5e9' : '#f43f5e';
+        const color = tag === 'A' ? (isDark ? '#38bdf8' : '#0ea5e9') : (isDark ? '#fb7185' : '#f43f5e');
         const t = res.eta * Math.pow(-Math.log(pct / 100), 1 / res.beta);
         shapes.push({ type: 'line', x0: t, x1: t, y0: 0, y1: pct, line: { color, width: 2, dash: 'dash' } });
-        annotations.push({ x: t, y: pct + 5, text: `B${Math.round(100 - pct)}=${Math.round(t)}`, showarrow: false, font: { weight: 700, color } });
+        annotations.push({
+            x: t,
+            y: pct + 5,
+            text: `B${Math.round(100 - pct)}=${Math.round(t)}`,
+            showarrow: false,
+            font: { weight: 700, color: color }
+        });
     });
     Plotly.relayout('chartRel', { shapes, annotations });
 }
@@ -431,15 +466,17 @@ function exportData() {
 
 function generateReport() {
     const element = document.getElementById('reportArea');
+    const isDark = !document.body.classList.contains('light-mode');
+
     // 增加導出時的穩定性，暫時強制背景與寬度
     const originalStyle = element.style.cssText;
-    element.style.background = "#f8fafc";
+    element.style.background = isDark ? "#0f172a" : "#f8fafc";
     element.style.padding = "40px";
 
     html2canvas(element, {
         scale: 2, // 提高解析度
         useCORS: true,
-        backgroundColor: "#f8fafc",
+        backgroundColor: isDark ? "#0f172a" : "#f8fafc",
         windowWidth: 1400,
         onclone: (clonedDoc) => {
             // 在副本中移除可能導致干擾的元素
@@ -454,4 +491,19 @@ function generateReport() {
         link.download = `Mouldex_Weibull_Report_${new Date().getTime()}.png`;
         link.click();
     });
+}
+
+/**
+ * 主題切換功能
+ */
+function toggleTheme() {
+    document.body.classList.toggle('light-mode');
+    const btn = document.getElementById('themeToggleBtn');
+    const isDark = !document.body.classList.contains('light-mode');
+    btn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+
+    // 如果已有圖表，則重新繪製以適應新主題
+    if (analysisResults) {
+        drawAnalytics(analysisResults.groupA, analysisResults.groupB);
+    }
 }
