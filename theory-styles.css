@@ -1,16 +1,18 @@
 /* ========================================
-   強制文字對比度修正 (覆蓋所有行內樣式)
+   理論指南文字對比度修正 (支援深淺色模式)
    ======================================== */
 
-/* 理論區塊所有標題 */
-.theory-section h2,
-.theory-section h3,
-.theory-section h4 {
+/* ==================== 淺色模式 (預設) ==================== */
+
+/* 理論區塊所有標題 - 淺色模式用深色文字 */
+.light-mode .theory-section h2,
+.light-mode .theory-section h3,
+.light-mode .theory-section h4 {
     color: #1e293b !important;
     font-weight: 700;
 }
 
-.theory-section h2 {
+.light-mode .theory-section h2 {
     font-size: 1.5em;
     border-bottom: 2px solid #0ea5e9;
     padding-bottom: 8px;
@@ -18,69 +20,54 @@
     margin-bottom: 16px;
 }
 
-.theory-section h3 {
+.light-mode .theory-section h3 {
     font-size: 1.2em;
     margin-top: 20px;
     margin-bottom: 12px;
 }
 
-.theory-section h4 {
+.light-mode .theory-section h4 {
     font-size: 1.05em;
     margin-top: 16px;
     margin-bottom: 10px;
 }
 
-/* 所有段落、列表項目 */
-.theory-section p,
-.theory-section li,
-.theory-section td {
+/* 所有段落、列表項目 - 淺色模式 */
+.light-mode .theory-section p,
+.light-mode .theory-section li,
+.light-mode .theory-section td {
     color: #1e293b !important;
     line-height: 1.8;
 }
 
-.theory-section ul,
-.theory-section ol {
-    padding-left: 24px;
-    margin: 12px 0;
-}
-
-/* 所有強調文字 */
-.theory-section strong,
-.theory-section .highlight-text {
+/* 所有強調文字 - 淺色模式 */
+.light-mode .theory-section strong,
+.light-mode .theory-section .highlight-text {
     color: #0c4a6e !important;
     font-weight: 700;
 }
 
-/* 範例框 - 強制覆蓋所有背景與文字顏色 */
-.theory-section .calculation-example,
-.theory-section div[style*="background"] {
-    padding: 20px !important;
-    border-radius: 8px !important;
-    margin: 20px 0 !important;
-    border-left: 4px solid #0ea5e9 !important;
-}
-
-/* 範例框內的所有元素強制深色文字 */
-.theory-section .calculation-example *,
-.theory-section div[style*="background"] * {
+/* 範例框內的所有元素 - 淺色模式深色文字 */
+.light-mode .theory-section .calculation-example *,
+.light-mode .theory-section div[style*="background"] * {
     color: #1e293b !important;
 }
 
-.theory-section .calculation-example h3,
-.theory-section div[style*="background"] h3 {
+.light-mode .theory-section .calculation-example h3,
+.light-mode .theory-section div[style*="background"] h3 {
     color: #0c4a6e !important;
     font-size: 1.1em !important;
     margin-top: 0 !important;
     margin-bottom: 12px !important;
 }
 
-.theory-section .calculation-example strong,
-.theory-section div[style*="background"] strong {
+.light-mode .theory-section .calculation-example strong,
+.light-mode .theory-section div[style*="background"] strong {
     color: #0c4a6e !important;
 }
 
-/* 公式框 */
-.theory-section .formula-box {
+/* 公式框 - 淺色模式 */
+.light-mode .theory-section .formula-box {
     background: #e0f2fe !important;
     padding: 20px !important;
     border-radius: 8px !important;
@@ -89,19 +76,19 @@
     text-align: center;
 }
 
-.theory-section .formula-box * {
+.light-mode .theory-section .formula-box * {
     color: #1e293b !important;
 }
 
-/* 表格樣式 */
-.theory-section table {
+/* 表格 - 淺色模式 */
+.light-mode .theory-section table {
     width: 100%;
     margin: 20px 0;
     border-collapse: collapse;
     border: 2px solid #475569 !important;
 }
 
-.theory-section table th {
+.light-mode .theory-section table th {
     background-color: #1e293b !important;
     color: #f1f5f9 !important;
     font-weight: 700;
@@ -110,18 +97,19 @@
     border: 1px solid #475569 !important;
 }
 
-.theory-section table td {
+.light-mode .theory-section table td {
     padding: 12px;
     border: 1px solid #cbd5e1 !important;
     background-color: #ffffff !important;
+    color: #1e293b !important;
 }
 
-.theory-section table tr:nth-child(even) td {
+.light-mode .theory-section table tr:nth-child(even) td {
     background-color: #f8fafc !important;
 }
 
-/* 程式碼區塊 */
-.theory-section code {
+/* 程式碼區塊 - 淺色模式 */
+.light-mode .theory-section code {
     background: #e2e8f0 !important;
     color: #0c4a6e !important;
     padding: 2px 6px;
@@ -131,7 +119,7 @@
     font-weight: 600;
 }
 
-.theory-section .code-block {
+.light-mode .theory-section .code-block {
     background: #f1f5f9 !important;
     padding: 16px;
     border-radius: 8px;
@@ -140,7 +128,7 @@
     margin: 16px 0;
 }
 
-.theory-section pre {
+.light-mode .theory-section pre {
     background: transparent !important;
     margin: 0;
     color: #1e293b !important;
@@ -149,23 +137,115 @@
     line-height: 1.6;
 }
 
-/* 深色模式調整 - 僅在深色模式下改用淺色文字 */
+/* ==================== 深色模式 (預設與明確指定) ==================== */
+
+/* 理論區塊所有標題 - 深色模式用極亮文字 */
 body:not(.light-mode) .theory-section h2,
 body:not(.light-mode) .theory-section h3,
-body:not(.light-mode) .theory-section h4,
-body:not(.light-mode) .theory-section p,
-body:not(.light-mode) .theory-section li,
-body:not(.light-mode) .theory-section td,
-body:not(.light-mode) .theory-section strong {
+body:not(.light-mode) .theory-section h4 {
     color: #f1f5f9 !important;
+    font-weight: 700;
 }
 
+body:not(.light-mode) .theory-section h2 {
+    font-size: 1.5em;
+    border-bottom: 2px solid #38bdf8;
+    padding-bottom: 8px;
+    margin-top: 24px;
+    margin-bottom: 16px;
+}
+
+body:not(.light-mode) .theory-section h3 {
+    font-size: 1.2em;
+    color: #7dd3fc !important;
+    margin-top: 20px;
+    margin-bottom: 12px;
+}
+
+body:not(.light-mode) .theory-section h4 {
+    font-size: 1.05em;
+    margin-top: 16px;
+    margin-bottom: 10px;
+}
+
+/* 所有段落、列表項目 - 深色模式極亮文字 */
+body:not(.light-mode) .theory-section p,
+body:not(.light-mode) .theory-section li,
+body:not(.light-mode) .theory-section td {
+    color: #f1f5f9 !important;
+    line-height: 1.8;
+}
+
+/* 所有強調文字 - 深色模式亮藍色 */
+body:not(.light-mode) .theory-section strong,
+body:not(.light-mode) .theory-section .highlight-text {
+    color: #7dd3fc !important;
+    font-weight: 700;
+}
+
+/* 範例框 - 深色模式強制覆蓋 */
+body:not(.light-mode) .theory-section .calculation-example,
+body:not(.light-mode) .theory-section div[style*="background"] {
+    padding: 20px !important;
+    border-radius: 8px !important;
+    margin: 20px 0 !important;
+    border-left: 4px solid #38bdf8 !important;
+    background: rgba(56, 189, 248, 0.1) !important;
+}
+
+/* 範例框內的所有元素 - 深色模式極亮文字 */
 body:not(.light-mode) .theory-section .calculation-example *,
 body:not(.light-mode) .theory-section div[style*="background"] * {
     color: #f1f5f9 !important;
 }
 
+body:not(.light-mode) .theory-section .calculation-example h3,
+body:not(.light-mode) .theory-section div[style*="background"] h3 {
+    color: #7dd3fc !important;
+    font-size: 1.1em !important;
+    margin-top: 0 !important;
+    margin-bottom: 12px !important;
+}
+
+body:not(.light-mode) .theory-section .calculation-example strong,
+body:not(.light-mode) .theory-section div[style*="background"] strong {
+    color: #7dd3fc !important;
+}
+
+/* 公式框 - 深色模式 */
+body:not(.light-mode) .theory-section .formula-box {
+    background: rgba(56, 189, 248, 0.15) !important;
+    padding: 20px !important;
+    border-radius: 8px !important;
+    margin: 20px 0 !important;
+    border: 2px solid #38bdf8 !important;
+    text-align: center;
+}
+
+body:not(.light-mode) .theory-section .formula-box * {
+    color: #f1f5f9 !important;
+}
+
+/* 表格 - 深色模式 */
+body:not(.light-mode) .theory-section table {
+    width: 100%;
+    margin: 20px 0;
+    border-collapse: collapse;
+    border: 2px solid #475569 !important;
+}
+
+body:not(.light-mode) .theory-section table th {
+    background-color: #0f172a !important;
+    color: #f1f5f9 !important;
+    font-weight: 700;
+    padding: 14px;
+    text-align: left;
+    border: 1px solid #475569 !important;
+}
+
 body:not(.light-mode) .theory-section table td {
+    padding: 12px;
+    border: 1px solid #334155 !important;
     background-color: #1e293b !important;
     color: #f1f5f9 !important;
 }
@@ -174,16 +254,45 @@ body:not(.light-mode) .theory-section table tr:nth-child(even) td {
     background-color: #0f172a !important;
 }
 
+/* 程式碼區塊 - 深色模式 */
 body:not(.light-mode) .theory-section code {
     background: rgba(148, 163, 184, 0.3) !important;
     color: #7dd3fc !important;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 0.9em;
+    font-weight: 600;
 }
 
 body:not(.light-mode) .theory-section .code-block {
     background: #0f172a !important;
-    border-color: #475569 !important;
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    border: 1px solid #475569 !important;
+    margin: 16px 0;
 }
 
 body:not(.light-mode) .theory-section pre {
+    background: transparent !important;
+    margin: 0;
     color: #cbd5e1 !important;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 0.9em;
+    line-height: 1.6;
+}
+
+/* ==================== 共通樣式 ==================== */
+
+.theory-section ul,
+.theory-section ol {
+    padding-left: 24px;
+    margin: 12px 0;
+}
+
+.theory-section table {
+    width: 100%;
+    margin: 20px 0;
+    border-collapse: collapse;
 }
