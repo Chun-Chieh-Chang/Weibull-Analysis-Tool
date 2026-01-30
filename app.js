@@ -280,8 +280,8 @@ function drawAnalytics(resA, resB) {
     const colA = isDark ? '#38bdf8' : '#0ea5e9';
     const colB = isDark ? '#fb7185' : '#f43f5e';
     const textColor = isDark ? '#f1f5f9' : '#0f172a';
-    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : '#f1f5f9';
-    const lineColor = isDark ? 'rgba(255, 255, 255, 0.2)' : '#e2e8f0';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : '#cbd5e1';
+    const lineColor = isDark ? 'rgba(255, 255, 255, 0.2)' : '#94a3b8';
     const bgColor = 'rgba(0,0,0,0)';
 
     const sharedLayout = {
@@ -513,24 +513,37 @@ function generateReport() {
     const element = document.getElementById('reportArea');
     const isDark = !document.body.classList.contains('light-mode');
 
-    // 增加導出時的穩定性，暫時強制背景與寬度
+    // 核彈級修復：移除 MathJax 產生的重影元素 (mjx-assistive-mml)
+    const ghosts = document.querySelectorAll('mjx-assistive-mml');
+    ghosts.forEach(g => g.remove());
+
     const originalStyle = element.style.cssText;
     element.style.background = isDark ? "#0f172a" : "#f8fafc";
     element.style.padding = "40px";
 
     html2canvas(element, {
-        scale: 2, // 提高解析度
+        scale: 2,
         useCORS: true,
         backgroundColor: isDark ? "#0f172a" : "#f8fafc",
         windowWidth: 1400,
         onclone: (clonedDoc) => {
-            // 在副本中移除可能導致干擾的元素
+            // 在副本中再次確認移除重影，並優化樣式
+            const clonedGhosts = clonedDoc.querySelectorAll('mjx-assistive-mml');
+            clonedGhosts.forEach(g => g.remove());
+
             const report = clonedDoc.getElementById('reportArea');
             report.style.width = "1400px";
             report.style.margin = "0";
+
+            // 移除所有文字陰影，徹底避免重影感
+            const all = clonedDoc.querySelectorAll('*');
+            all.forEach(el => {
+                el.style.textShadow = 'none';
+                el.style.boxShadow = 'none';
+            });
         }
     }).then(canvas => {
-        element.style.cssText = originalStyle; // 還原樣式
+        element.style.cssText = originalStyle;
         const link = document.createElement('a');
         link.href = canvas.toDataURL('image/png');
         link.download = `Mouldex_Weibull_Report_${new Date().getTime()}.png`;
