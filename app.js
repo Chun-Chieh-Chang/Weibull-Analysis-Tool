@@ -86,11 +86,11 @@ function setupEventListeners() {
 
     const inputRel = document.getElementById('markerRInput');
     if (inputRel) {
-        inputRel.addEventListener('input', () => {
+        inputRel.addEventListener('change', () => {
             let val = parseFloat(inputRel.value);
             if (isNaN(val)) return;
-            if (val < 0) val = 0;
-            if (val > 100) val = 100;
+            if (val < 0) val = 0.1;
+            if (val > 99.9) val = 99.9;
             markerReliabilityPercent = val;
             if (analysisResults) updateReliabilityMarkers(markerReliabilityPercent);
         });
@@ -553,7 +553,6 @@ function toggleTheme() {
 
 // 相容性別名與輔助函數
 const clearAllData = resetAll;
-const deleteRow = deleteDataRow;
 
 function loadDemo(group) {
     if (group === 'A') {
@@ -575,3 +574,20 @@ function clearData(group) {
     if (group === 'A') dataGroupA = []; else dataGroupB = [];
     updateTable(group);
 }
+
+// 確保全域可用 (Explicitly export to window)
+window.toggleTheme = toggleTheme;
+window.runAnalysis = runAnalysis;
+window.addData = addData;
+window.deleteRow = deleteRow;
+window.clearData = clearData;
+window.clearAllData = clearAllData;
+window.loadDemo = loadDemo;
+window.showBatchInput = showBatchInput;
+window.closeBatchInput = closeBatchInput;
+window.processBatchInput = processBatchInput;
+window.openTheory = openTheory;
+window.closeTheory = closeTheory;
+window.setAnalysisMode = setAnalysisMode;
+window.generateReport = generateReport;
+window.exportData = exportData;
