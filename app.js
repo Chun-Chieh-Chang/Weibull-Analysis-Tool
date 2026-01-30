@@ -141,13 +141,13 @@ function updateTable(group) {
     if (!tbody) return;
 
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px; color: #94a3b8;">尚未輸入數據</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-sub);">尚未輸入數據</td></tr>`;
         return;
     }
 
     tbody.innerHTML = data.map((item, idx) => `
         <tr>
-            <td style="color: #64748b;">#${idx + 1}</td>
+            <td style="color: var(--text-sub);">#${idx + 1}</td>
             <td style="font-weight: 600;">${item.t.toLocaleString()}</td>
             <td>
                 <span class="p-badge ${item.s === 'F' ? 'p-badge-rose' : 'p-badge-blue'}">
@@ -155,7 +155,7 @@ function updateTable(group) {
                 </span>
             </td>
             <td>
-                <button onclick="deleteRow('${group}', ${idx})" style="border:none; background:none, cursor:pointer, color: #f43f5e; opacity:0.6;">
+                <button onclick="deleteRow('${group}', ${idx})" style="border:none; background:none; cursor:pointer; color: #f43f5e; opacity:0.8;">
                     <i class="fas fa-trash"></i>
                 </button>
             </td>
