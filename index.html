@@ -10,6 +10,7 @@
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="theory-styles.css">
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
@@ -284,7 +285,15 @@
         }
 
         .btn-clear {
-            background: #64748b;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            font-weight: 700;
+            font-size: 1em;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-clear:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(239, 68, 68, 0.4);
         }
 
         .btn-del {
@@ -382,23 +391,26 @@
 
         .batch-modal-content {
             background-color: var(--card-bg);
-            margin: 5% auto;
-            padding: 30px;
+            margin: 3% auto;
+            padding: 0;
             border-radius: 12px;
-            width: 80%;
-            max-width: 600px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
             border: 1px solid var(--panel-border);
             color: var(--text-main);
+            display: flex;
+            flex-direction: column;
         }
 
         .batch-modal-header {
             font-size: 1.3em;
             font-weight: bold;
             color: var(--accent-a);
-            margin-bottom: 15px;
             border-bottom: 2px solid var(--accent-a);
-            padding-bottom: 10px;
+            padding: 20px 30px 15px;
+            flex-shrink: 0;
         }
 
         .batch-textarea {
@@ -424,7 +436,13 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
-            margin-top: 15px;
+            padding: 20px 30px;
+            background: var(--card-bg);
+            border-top: 1px solid var(--panel-border);
+            flex-shrink: 0;
+            position: sticky;
+            bottom: 0;
+            border-radius: 0 0 12px 12px;
         }
 
         .batch-help {
@@ -1056,7 +1074,7 @@
                     <div class="p-tab" onclick="switchTheoryTab('comparison')">雙組比對</div>
                 </div>
 
-                <div style="max-height: 70vh; overflow-y: auto; padding: 0 20px;">
+                <div style="flex: 1; overflow-y: auto; padding: 0 30px 30px; min-height: 0;">
                     <!-- 區塊一：基礎概念 -->
                     <div id="theory-basics" class="theory-section" style="display:block;">
                         <h2>1. 數據類型：失效與右設限</h2>
@@ -1533,7 +1551,7 @@ print(f"Eta (lambda_): {wf.lambda_}")</pre>
                     </div> <!-- End of theory-comparison -->
                 </div>
                 <div class="batch-buttons" style="grid-template-columns: 1fr;">
-                    <button class="btn-clear" onclick="closeTheory()">關閉</button>
+                    <button class="btn-clear" onclick="closeTheory()">✖ 關閉視窗</button>
                 </div>
             </div>
         </div>

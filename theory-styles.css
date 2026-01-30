@@ -1,0 +1,109 @@
+/* Dark mode text contrast improvements */
+.theory-section h2,
+.theory-section h3 {
+    color: var(--text-main);
+    margin-top: 24px;
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.theory-section h2 {
+    font-size: 1.5em;
+    border-bottom: 2px solid var(--accent-a);
+    padding-bottom: 8px;
+}
+
+.theory-section h3 {
+    font-size: 1.2em;
+    color: var(--accent-a);
+}
+
+.theory-section p,
+.theory-section li {
+    color: var(--text-main);
+    line-height: 1.8;
+    margin-bottom: 8px;
+}
+
+.theory-section ul {
+    padding-left: 20px;
+    margin: 10px 0;
+}
+
+.theory-section table {
+    margin: 20px 0;
+    border: 1px solid var(--panel-border);
+}
+
+.theory-section table th {
+    background-color: var(--table-header);
+    color: var(--header-text);
+    font-weight: 700;
+    padding: 12px;
+}
+
+.theory-section table td {
+    padding: 10px;
+    border: 1px solid var(--panel-border);
+    color: var(--text-main);
+}
+
+.theory-section .calculation-example {
+    padding: 16px;
+    border-radius: 8px;
+    margin: 16px 0;
+    border-left: 4px solid;
+    background: rgba(56, 189, 248, 0.08);
+}
+
+.theory-section .calculation-example p,
+.theory-section .calculation-example li {
+    color: var(--text-main);
+}
+
+.theory-section .formula-box {
+    background: rgba(56, 189, 248, 0.1);
+    padding: 16px;
+    border-radius: 8px;
+    margin: 16px 0;
+    border: 2px solid var(--accent-a);
+}
+
+.theory-section code {
+    background: rgba(148, 163, 184, 0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent-a);
+    font-size: 0.9em;
+}
+
+.theory-section .code-block {
+    background: var(--input-bg);
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    border: 1px solid var(--panel-border);
+    margin: 16px 0;
+}
+
+.theory-section pre {
+    background: transparent;
+    margin: 0;
+    color: var(--text-main);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9em;
+}
+
+.theory-section .highlight-text {
+    color: var(--accent-a);
+    font-weight: 700;
+}
+
+.light-mode .theory-section .calculation-example {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.light-mode .theory-section .formula-box {
+    background-color: #e0f2fe;
+}
