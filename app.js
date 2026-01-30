@@ -551,37 +551,13 @@ function toggleTheme() {
     }
 }
 
-// 相容性別名與輔助函數
-const clearAllData = resetAll;
-
-function loadDemo(group) {
-    if (group === 'A') {
-        dataGroupA = [
-            { t: 300, s: 'F' }, { t: 450, s: 'F' }, { t: 600, s: 'F' }, { t: 750, s: 'S' },
-            { t: 900, s: 'F' }, { t: 1100, s: 'F' }, { t: 1300, s: 'F' }
-        ];
-    } else {
-        dataGroupB = [
-            { t: 400, s: 'F' }, { t: 550, s: 'F' }, { t: 750, s: 'F' }, { t: 900, s: 'S' },
-            { t: 1100, s: 'F' }, { t: 1350, s: 'F' }, { t: 1600, s: 'F' }
-        ];
-    }
-    sortData(group);
-    updateTable(group);
-}
-
-function clearData(group) {
-    if (group === 'A') dataGroupA = []; else dataGroupB = [];
-    updateTable(group);
-}
-
 // 確保全域可用 (Explicitly export to window)
 window.toggleTheme = toggleTheme;
 window.runAnalysis = runAnalysis;
 window.addData = addData;
 window.deleteRow = deleteRow;
 window.clearData = clearData;
-window.clearAllData = clearAllData;
+window.clearAllData = resetAll; // 別名整合
 window.loadDemo = loadDemo;
 window.showBatchInput = showBatchInput;
 window.closeBatchInput = closeBatchInput;
